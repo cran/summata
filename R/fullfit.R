@@ -1,0 +1,1042 @@
+#' Complete Regression Analysis Workflow
+#'
+#' Executes a comprehensive regression analysis pipeline that combines univariable 
+#' screening, automatic/manual variable selection, and multivariable modeling 
+#' in a single function call. This function is designed to streamline the complete 
+#' analytical workflow from initial exploration to final adjusted models, with 
+#' publication-ready formatted output showing both univariable and multivariable 
+#' results side-by-side if desired.
+#'
+#' @param data Data frame or data.table containing the analysis dataset. The 
+#'   function automatically converts data frames to data.tables for efficient
+#'   processing.
+#'   
+#' @param outcome Character string specifying the outcome variable name. For 
+#'   time-to-event analysis, use \code{Surv()} syntax for the outcome variable
+#'   (\emph{e.g.,} \code{"Surv(os_months, os_status)"}).
+#'   
+#' @param predictors Character vector of predictor variable names to analyze. 
+#'   All predictors are tested in univariable models. The subset included in 
+#'   the multivariable model depends on the \code{method} parameter.
+#'   
+#' @param method Character string specifying the variable selection strategy:
+#'   \itemize{
+#'     \item \code{"screen"} - Automatic selection based on univariable \emph{p}-value 
+#'       threshold. Only predictors with p \eqn{\le} \code{p_threshold} in univariable 
+#'       analysis are included in the multivariable model [default]
+#'     \item \code{"all"} - Include all predictors in both univariable and 
+#'       multivariable analyses (no selection)
+#'     \item \code{"custom"} - Manual selection. All predictors in univariable 
+#'       analysis, but only those specified in \code{multi_predictors} are 
+#'       included in multivariable model
+#'   }
+#'   
+#' @param multi_predictors Character vector of predictors to include in the 
+#'   multivariable model when \code{method = "custom"}. Required when using 
+#'   custom selection. Ignored for other methods. Default is \code{NULL}.
+#'   
+#' @param p_threshold Numeric \emph{p}-value threshold for automatic variable
+#'   selection when \code{method = "screen"}. Predictors with univariable
+#'   \emph{p}-value less than or equal to the threshold are included in
+#'   multivariable model. Common values: 0.05 (strict), 0.10 (moderate),
+#'   0.20 (liberal screening). Default is 0.05. Ignored for other methods.
+#'   
+#' @param columns Character string specifying which result columns to display:
+#'   \itemize{
+#'     \item \code{"both"} - Show both univariable and multivariable results 
+#'       side-by-side [default]
+#'     \item \code{"uni"} - Show only univariable results
+#'     \item \code{"multi"} - Show only multivariable results
+#'   }
+#'   
+#' @param model_type Character string specifying the regression model type:
+#'   \itemize{
+#'     \item \code{"glm"} - Generalized linear model (default). Supports multiple 
+#'       distributions via the \code{family} parameter including logistic, Poisson, 
+#'       Gamma, Gaussian, and quasi-likelihood models.
+#'     \item \code{"lm"} - Linear regression for continuous outcomes with normally 
+#'       distributed errors.
+#'     \item \code{"coxph"} - Cox proportional hazards model for time-to-event 
+#'       survival analysis. Requires \code{Surv()} outcome syntax.
+#'     \item \code{"clogit"} - Conditional logistic regression for matched 
+#'       case-control studies.
+#'     \item \code{"negbin"} - Negative binomial regression for overdispersed count 
+#'       data (requires MASS package). Estimates an additional dispersion parameter 
+#'       compared to Poisson regression.
+#'     \item \code{"glmer"} - Generalized linear mixed-effects model for hierarchical 
+#'       or clustered data with non-normal outcomes (requires \pkg{lme4} package and 
+#'       \code{random} parameter).
+#'     \item \code{"lmer"} - Linear mixed-effects model for hierarchical or clustered 
+#'       data with continuous outcomes (requires \pkg{lme4} package and \code{random} 
+#'       parameter).
+#'     \item \code{"coxme"} - Cox mixed-effects model for clustered survival data 
+#'       (requires coxme package and \code{random} parameter).
+#'   }
+#'   
+#' @param family For GLM and GLMER models, specifies the error distribution and link 
+#'   function. Can be a character string, a family function, or a family object.
+#'   Ignored for non-GLM/GLMER models.
+#'   
+#'   \strong{Binary/Binomial outcomes:}
+#'   \itemize{
+#'     \item \code{"binomial"} or \code{binomial()} - Logistic regression for binary 
+#'       outcomes (0/1, TRUE/FALSE). Returns odds ratios (OR). Default.
+#'     \item \code{"quasibinomial"} or \code{quasibinomial()} - Logistic regression 
+#'       with overdispersion. Use when residual deviance >> residual df.
+#'     \item \code{binomial(link = "probit")} - Probit regression (normal CDF link).
+#'     \item \code{binomial(link = "cloglog")} - Complementary log-log link for 
+#'       asymmetric binary outcomes.
+#'   }
+#'   
+#'   \strong{Count outcomes:}
+#'   \itemize{
+#'     \item \code{"poisson"} or \code{poisson()} - Poisson regression for count 
+#'       data. Returns rate ratios (RR). Assumes mean = variance.
+#'     \item \code{"quasipoisson"} or \code{quasipoisson()} - Poisson regression 
+#'       with overdispersion. Use when variance > mean.
+#'   }
+#'   
+#'   \strong{Continuous outcomes:}
+#'   \itemize{
+#'     \item \code{"gaussian"} or \code{gaussian()} - Normal/Gaussian distribution 
+#'       for continuous outcomes. Equivalent to linear regression.
+#'     \item \code{gaussian(link = "log")} - Log-linear model for positive continuous 
+#'       outcomes. Returns multiplicative effects.
+#'   }
+#'   
+#'   \strong{Positive continuous outcomes:}
+#'   \itemize{
+#'     \item \code{"Gamma"} or \code{Gamma()} - Gamma distribution for positive, 
+#'       right-skewed continuous data (\emph{e.g.,} costs, lengths of stay). Default log link.
+#'     \item \code{Gamma(link = "inverse")} - Gamma with inverse (canonical) link.
+#'     \item \code{Gamma(link = "identity")} - Gamma with identity link for additive 
+#'       effects on positive outcomes.
+#'     \item \code{"inverse.gaussian"} or \code{inverse.gaussian()} - Inverse Gaussian 
+#'       for positive, highly right-skewed data.
+#'   }
+#'   
+#'   For negative binomial regression (overdispersed counts), use 
+#'   \code{model_type = "negbin"} instead of the \code{family} parameter.
+#'   
+#'   See \code{\link[stats]{family}} for additional details and options.
+#'
+#' @param random Character string specifying the random-effects formula for 
+#'   mixed-effects models (\code{glmer}, \code{lmer}, \code{coxme}). Use standard
+#'   \pkg{lme4}/\pkg{coxme} syntax, \emph{e.g.,} \code{"(1|site)"} for random
+#'   intercepts by site, \code{"(1|site/patient)"} for nested random effects.
+#'   Required when \code{model_type} is a mixed-effects model type unless random
+#'   effects are included in the \code{predictors} vector. Alternatively, random
+#'   effects can be included directly in the \code{predictors} vector using the same 
+#'   syntax (\emph{e.g.,} \code{predictors = c("age", "sex", "(1|site)")}), though 
+#'   they will not be screened as predictors. Default is \code{NULL}.
+#'   
+#' @param conf_level Numeric confidence level for confidence intervals. Must be 
+#'   between 0 and 1. Default is 0.95 (95\% CI).
+#'   
+#' @param reference_rows Logical. If \code{TRUE}, adds rows for reference 
+#'   categories of factor variables with baseline values. Default is \code{TRUE}.
+#'   
+#' @param show_n Logical. If \code{TRUE}, includes sample size columns. 
+#'   Default is \code{TRUE}.
+#'   
+#' @param show_events Logical. If \code{TRUE}, includes events columns (survival 
+#'   and logistic models). Default is \code{TRUE}.
+#'   
+#' @param digits Integer specifying decimal places for effect estimates. 
+#'   Default is 2.
+#'   
+#' @param p_digits Integer specifying the number of decimal places for
+#'   \emph{p}-values. Values smaller than \code{10^(-p_digits)} are displayed
+#'   as \code{"< 0.001"} (for \code{p_digits = 3}), \code{"< 0.0001"} (for
+#'   \code{p_digits = 4}), etc. Default is 3.
+#'
+#' @param labels Named character vector or list providing custom display
+#'   labels for variables. Names should match variable names, values are
+#'   display labels. Default is \code{NULL}.
+#'   
+#' @param metrics Character specification for which statistics to display:
+#'   \itemize{
+#'     \item \code{"both"} - Show effect estimates with CI and \emph{p}-values [default]
+#'     \item \code{"effect"} - Show only effect estimates with CI
+#'     \item \code{"p"} - Show only \emph{p}-values
+#'   }
+#'   Can also be a character vector: \code{c("effect", "p")} is equivalent to 
+#'   \code{"both"}.
+#'   
+#' @param return_type Character string specifying what to return:
+#'   \itemize{
+#'     \item \code{"table"} - Return formatted results table only [default]
+#'     \item \code{"model"} - Return multivariable model object only
+#'     \item \code{"both"} - Return list with both table and model
+#'   }
+#'   
+#' @param keep_models Logical. If \code{TRUE}, stores univariable model objects 
+#'   in the output. Can consume significant memory for many predictors. 
+#'   Default is \code{FALSE}.
+#'   
+#' @param exponentiate Logical. Whether to exponentiate coefficients. Default 
+#'   is \code{NULL}, which automatically exponentiates for logistic, Poisson,
+#'   and Cox models, and displays raw coefficients for linear models.
+#'
+#' @param parallel Logical. If \code{TRUE} (default), fits univariable models
+#'   in parallel using multiple CPU cores for improved performance.
+#' 
+#' @param n_cores Integer specifying the number of CPU cores to use for
+#'   parallel processing. Default is \code{NULL} (auto-detect: uses
+#'   \code{detectCores() - 1}). Ignored when \code{parallel = FALSE}.
+#'
+#' @param number_format Character string or two-element character vector
+#'   controlling thousand and decimal separators in formatted output. Named
+#'   presets:
+#'   \itemize{
+#'     \item \code{"us"} - Comma thousands, period decimal: \code{1,234.56} [default]
+#'     \item \code{"eu"} - Period thousands, comma decimal: \code{1.234,56}
+#'     \item \code{"space"} - Thin-space thousands, period decimal: \code{1 234.56}
+#'       (SI/ISO 31-0)
+#'     \item \code{"none"} - No thousands separator: \code{1234.56}
+#'   }
+#'   Or provide a custom two-element vector \code{c(big.mark, decimal.mark)},
+#'   \emph{e.g.}, \code{c("'", ".")} for Swiss-style: \verb{1'234.56}.
+#'
+#'   When \code{NULL} (default), uses
+#'   \code{getOption("summata.number_format", "us")}. Set the global option
+#'   once per session to avoid passing this argument repeatedly:
+#'   \preformatted{
+#'     options(summata.number_format = "eu")
+#'   }
+#'
+#' @param verbose Logical. If \code{TRUE}, displays model fitting warnings
+#'   (\emph{e.g.,} singular fit, convergence issues). If \code{FALSE} (default),
+#'   routine fitting messages are suppressed while unexpected warnings are
+#'   preserved. When \code{NULL}, uses
+#'   \code{getOption("summata.verbose", FALSE)}.
+#'
+#' @param ... Additional arguments passed to model fitting functions (\emph{e.g.,} 
+#'   \code{weights}, \code{subset}, \code{na.action}).
+#'
+#' @return Depends on \code{return_type} parameter:
+#'   
+#'   When \code{return_type = "table"} (default): A data.table with S3 class 
+#'   \code{"fullfit_result"} containing:
+#'   \describe{
+#'     \item{Variable}{Character. Predictor name or custom label}
+#'     \item{Group}{Character. Category level for factors, empty for continuous}
+#'     \item{n/n_group}{Integer. Sample sizes (if \code{show_n = TRUE})}
+#'     \item{events/events_group}{Integer. Event counts (if \code{show_events = TRUE})}
+#'     \item{OR/HR/RR/Coefficient (95\% CI)}{Character. Unadjusted effect 
+#'       (if \code{columns} includes "uni" and \code{metrics} includes "effect")}
+#'     \item{Uni p}{Character. Univariable \emph{p}-value (if \code{columns} includes 
+#'       "uni" and \code{metrics} includes "p")}
+#'     \item{aOR/aHR/aRR/Adj. Coefficient (95\% CI)}{Character. Adjusted effect 
+#'       (if \code{columns} includes "multi" and \code{metrics} includes "effect")}
+#'     \item{Multi p}{Character. Multivariable \emph{p}-value (if \code{columns} 
+#'       includes "multi" and \code{metrics} includes "p")}
+#'   }
+#'   
+#'   When \code{return_type = "model"}: The fitted multivariable model object 
+#'   (glm, lm, coxph, \emph{etc.}).
+#'   
+#'   When \code{return_type = "both"}: A list with two elements:
+#'   \describe{
+#'     \item{table}{The formatted results data.table}
+#'     \item{model}{The fitted multivariable model object}
+#'   }
+#'   
+#'   The table includes the following attributes:
+#'   \describe{
+#'     \item{outcome}{Character. The outcome variable name}
+#'     \item{model_type}{Character. The regression model type}
+#'     \item{method}{Character. The variable selection method used}
+#'     \item{columns}{Character. Which columns were displayed}
+#'     \item{model}{The multivariable model object (if fitted)}
+#'     \item{uni_results}{The complete univariable screening results}
+#'     \item{n_multi}{Integer. Number of predictors in multivariable model}
+#'     \item{screened}{Character vector. Names of predictors that passed 
+#'       univariable screening at the specified \emph{p}-value threshold}
+#'     \item{significant}{Character vector. Names of variables with p < 0.05
+#'       in the multivariable model (or univariable if multivariable was not
+#'       fitted)}
+#'   }
+#'
+#' @details
+#' \strong{Analysis Workflow:}
+#' 
+#' The function implements a complete regression analysis pipeline:
+#' \enumerate{
+#'   \item \strong{Univariable screening}: Fits separate models for each 
+#'     predictor (outcome ~ predictor). Each predictor is tested independently 
+#'     to understand crude associations.
+#'   \item \strong{Variable selection}: Based on the \code{method} parameter:
+#'     \itemize{
+#'       \item \code{"screen"}: Automatically selects predictors with univariable 
+#'         p \eqn{\le} \code{p_threshold}
+#'       \item \code{"all"}: Includes all predictors (no selection)
+#'       \item \code{"custom"}: Uses predictors specified in \code{multi_predictors}
+#'     }
+#'   \item \strong{Multivariable modeling}: Fits a single model with selected 
+#'     predictors (outcome ~ predictor1 + predictor2 + ...). Estimates are 
+#'     adjusted for all other variables in the model.
+#'   \item \strong{Output formatting}: Combines results into publication-ready 
+#'     table with appropriate effect measures and formatting.
+#' }
+#' 
+#' \strong{Variable Selection Strategies:}
+#' 
+#' \emph{"Screen" Method} (\code{method = "screen"}):
+#' \itemize{
+#'   \item Uses \emph{p}-value threshold for automatic selection
+#'   \item Liberal thresholds (\emph{e.g.,} 0.20) cast a wide net to avoid missing 
+#'     important predictors
+#'   \item Stricter thresholds (\emph{e.g.,} 0.05) focus on strongly associated predictors
+#'   \item Helps reduce overfitting and multicollinearity
+#'   \item Common in exploratory analyses and when sample size is limited
+#' }
+#' 
+#' \emph{"All" Method} (\code{method = "all"}):
+#' \itemize{
+#'   \item No variable selection - includes all predictors
+#'   \item Appropriate when all variables are theoretically important
+#'   \item Risk of overfitting with many predictors relative to sample size
+#'   \item Useful for confirmatory analyses with pre-specified models
+#' }
+#' 
+#' \emph{"Custom" Method} (\code{method = "custom"}):
+#' \itemize{
+#'   \item Manual selection based on subject matter knowledge
+#'   \item Runs univariable analysis for all predictors (for comparison)
+#'   \item Includes only specified predictors in multivariable model
+#'   \item Ideal for theory-driven model building
+#'   \item Allows comparison of unadjusted vs adjusted effects for all variables
+#' }
+#' 
+#' \strong{Interpreting Results:}
+#' 
+#' When \code{columns = "both"} (default), tables show:
+#' \itemize{
+#'   \item \strong{Univariable columns}: Crude associations, unadjusted for 
+#'     other variables. Labeled as "OR/HR/RR/Coefficient (95\% CI)" and "Uni \emph{p}"
+#'   \item \strong{Multivariable columns}: Adjusted associations, accounting 
+#'     for all other predictors in the model. Labeled as "aOR/aHR/aRR/Adj. Coefficient 
+#'     (95\% CI)" and "Multi \emph{p}" ("a" = adjusted)
+#'   \item Variables not meeting selection criteria show "-" in multivariable columns
+#' }
+#' 
+#' Comparing univariable and multivariable results helps identify:
+#' \itemize{
+#'   \item \strong{Confounding}: Large changes in effect estimates
+#'   \item \strong{Independent effects}: Similar univariable and multivariable 
+#'     estimates
+#'   \item \strong{Mediation}: Attenuated effects in multivariable model
+#'   \item \strong{Suppression}: Effects that emerge only after adjustment
+#' }
+#' 
+#' \strong{Sample Size Considerations:}
+#' 
+#' Rule of thumb for multivariable models:
+#' \itemize{
+#'   \item \strong{Logistic regression}: \eqn{\ge} 10 events per predictor variable
+#'   \item \strong{Cox regression}:  \eqn{\ge} 10 events per predictor variable
+#'   \item \strong{Linear regression}: \eqn{\ge} 10-20 observations per predictor
+#' }
+#' 
+#' Use screening methods to reduce predictor count when these ratios are not met.
+#'
+#' @seealso 
+#' \code{\link{uniscreen}} for univariable screening only,
+#' \code{\link{fit}} for fitting a single multivariable model,
+#' \code{\link{compfit}} for comparing multiple models,
+#' \code{\link{desctable}} for descriptive statistics
+#'
+#' @examples
+#' # Load example data
+#' data(clintrial)
+#' data(clintrial_labels)
+#' 
+#' # Example 1: Basic screening with p < 0.05 threshold
+#' result1 <- fullfit(
+#'     data = clintrial,
+#'     outcome = "os_status",
+#'     predictors = c("age", "sex", "bmi", "smoking",
+#'                    "hypertension", "diabetes",
+#'                    "treatment", "stage"),
+#'     method = "screen",
+#'     p_threshold = 0.05,
+#'     labels = clintrial_labels
+#' )
+#' print(result1)
+#' # Shows both univariable and multivariable results
+#' # Only significant univariable predictors in multivariable model
+#'
+#' \donttest{
+#' 
+#' # Example 2: Include all predictors (no selection)
+#' result2 <- fullfit(
+#'     data = clintrial,
+#'     outcome = "os_status",
+#'     predictors = c("age", "sex", "treatment", "stage"),
+#'     method = "all",
+#'     labels = clintrial_labels
+#' )
+#' print(result2)
+#' 
+#' # Example 3: Custom variable selection
+#' result3 <- fullfit(
+#'     data = clintrial,
+#'     outcome = "os_status",
+#'     predictors = c("age", "sex", "bmi", "smoking", "treatment", "stage"),
+#'     method = "custom",
+#'     multi_predictors = c("age", "treatment", "stage"),
+#'     labels = clintrial_labels
+#' )
+#' print(result3)
+#' # Univariable for all, multivariable for selected only
+#' 
+#' # Example 4: Cox regression with screening
+#' library(survival)
+#' cox_result <- fullfit(
+#'     data = clintrial,
+#'     outcome = "Surv(os_months, os_status)",
+#'     predictors = c("age", "sex", "treatment", "stage"),
+#'     model_type = "coxph",
+#'     method = "screen",
+#'     p_threshold = 0.10,
+#'     labels = clintrial_labels
+#' )
+#' print(cox_result)
+#' 
+#' # Example 5: Linear regression without screening
+#' linear_result <- fullfit(
+#'     data = clintrial,
+#'     outcome = "bmi",
+#'     predictors = c("age", "sex", "smoking", "creatinine"),
+#'     model_type = "lm",
+#'     method = "all",
+#'     labels = clintrial_labels
+#' )
+#' print(linear_result)
+#' 
+#' # Example 6: Poisson regression for count outcomes
+#' poisson_result <- fullfit(
+#'     data = clintrial,
+#'     outcome = "fu_count",
+#'     predictors = c("age", "stage", "treatment", "surgery"),
+#'     model_type = "glm",
+#'     family = "poisson",
+#'     method = "all",
+#'     labels = clintrial_labels
+#' )
+#' print(poisson_result)
+#' 
+#' # Example 7: Show only multivariable results
+#' multi_only <- fullfit(
+#'     data = clintrial,
+#'     outcome = "os_status",
+#'     predictors = c("age", "sex", "treatment", "stage"),
+#'     method = "all",
+#'     columns = "multi",
+#'     labels = clintrial_labels
+#' )
+#' print(multi_only)
+#' 
+#' # Example 8: Return both table and model object
+#' both <- fullfit(
+#'     data = clintrial,
+#'     outcome = "os_status",
+#'     predictors = c("age", "sex", "treatment", "stage"),
+#'     method = "all",
+#'     return_type = "both"
+#' )
+#' print(both$table)
+#' summary(both$model)
+#' 
+#' # Example 9: Keep univariable models for diagnostics
+#' with_models <- fullfit(
+#'     data = clintrial,
+#'     outcome = "os_status",
+#'     predictors = c("age", "bmi", "creatinine"),
+#'     keep_models = TRUE
+#' )
+#' uni_results <- attr(with_models, "uni_results")
+#' uni_models <- attr(uni_results, "models")
+#' summary(uni_models[["age"]])
+#' 
+#' # Example 10: Linear mixed effects with site clustering
+#' if (requireNamespace("lme4", quietly = TRUE)) {
+#'     lmer_result <- fullfit(
+#'         data = clintrial,
+#'         outcome = "los_days",
+#'         predictors = c("age", "treatment", "surgery", "stage"),
+#'         random = "(1|site)",
+#'         model_type = "lmer",
+#'         method = "all",
+#'         labels = clintrial_labels
+#'     )
+#'     print(lmer_result)
+#' }
+#'
+#' }
+#' 
+#' @family regression functions
+#' @export
+fullfit <- function(data,
+                    outcome, 
+                    predictors,
+                    method = "screen",
+                    multi_predictors = NULL,
+                    p_threshold = 0.05,
+                    columns = "both",
+                    model_type = "glm",
+                    family = "binomial",
+                    random = NULL,
+                    conf_level = 0.95,
+                    reference_rows = TRUE,
+                    show_n = TRUE,
+                    show_events = TRUE,
+                    digits = 2,
+                    p_digits = 3,
+                    labels = NULL,
+                    metrics = "both",
+                    return_type = "table",
+                    keep_models = FALSE,
+                    exponentiate = NULL,
+                    parallel = TRUE,
+                    n_cores = NULL,
+                    number_format = NULL,
+                    verbose = NULL,
+                    ...) {
+    
+    ## Input validation
+    method <- match.arg(method, c("screen", "all", "custom"))
+    columns <- match.arg(columns, c("both", "uni", "multi"))
+    return_type <- match.arg(return_type, c("table", "model", "both"))
+
+    if (method == "custom" && is.null(multi_predictors)) {
+        stop("multi_predictors must be specified when method='custom'")
+    }
+
+    ## Convert metrics to standardized format
+    if (length(metrics) == 1 && metrics == "both") {
+        metrics <- c("effect", "p")
+    }
+
+    if (!data.table::is.data.table(data)) {
+        data <- data.table::as.data.table(data)
+    }
+    
+    ## Resolve verbose setting
+    verbose <- if (is.null(verbose)) getOption("summata.verbose", FALSE) else verbose
+    
+    ## Validate inputs and auto-correct model type if needed
+    validation <- validate_fit_inputs(
+        data = data,
+        outcome = outcome,
+        predictors = predictors,
+        model_type = model_type,
+        family = if (model_type %in% c("glm", "glmer")) family else NULL,
+        conf_level = conf_level,
+        digits = digits,
+        p_digits = p_digits,
+        p_threshold = p_threshold,
+        auto_correct_model = TRUE
+    )
+    
+    ## Apply any auto-corrections
+    if (validation$auto_corrected) {
+        model_type <- validation$model_type
+    }
+    
+    ## Handle random effects - support both explicit parameter and embedded in predictors
+    mixed_types <- c("glmer", "lmer", "coxme")
+    has_random_in_predictors <- any(grepl("\\|", predictors))
+    
+    if (model_type %in% mixed_types && has_random_in_predictors) {
+        random_mask <- grepl("\\|", predictors)
+        random_in_preds <- predictors[random_mask]
+        predictors <- predictors[!random_mask]
+        
+        ## Combine explicit random with embedded random (if both provided)
+        if (!is.null(random)) {
+            message("Note: Random effects specified in both 'random' parameter and 'predictors'. ",
+                    "Combining: ", random, " + ", paste(random_in_preds, collapse = " + "))
+            random <- paste(c(random, random_in_preds), collapse = " + ")
+        } else {
+            random <- paste(random_in_preds, collapse = " + ")
+        }
+        
+        if (length(predictors) == 0) {
+            stop("No fixed-effect predictors specified. Random effects should be specified ",
+                 "via the 'random' parameter or alongside fixed-effect predictors.")
+        }
+    }
+    
+    ## Validate random is provided for mixed-effects models
+    if (model_type %in% mixed_types && is.null(random)) {
+        stop("'random' parameter is required for mixed-effects models (", model_type, ").\n",
+             "Example: random = \"(1|site)\" for random intercepts by site.\n",
+             "Alternatively, include random effects in 'predictors' using the same syntax.")
+    }
+    if (!is.null(random) && !model_type %in% mixed_types) {
+        warning("'random' parameter is ignored for non-mixed-effects models (", model_type, ").")
+        random <- NULL
+    }
+
+    ## Step 1: Univariable analysis (if needed)
+    uni_results <- NULL
+    uni_raw <- NULL
+    
+    if (columns %in% c("both", "uni")) {
+        message("Running univariable analysis...")
+        uni_results <- uniscreen(
+            data = data,
+            outcome = outcome,
+            predictors = predictors,
+            model_type = model_type,
+            family = family,
+            random = random,
+            conf_level = conf_level,
+            reference_rows = reference_rows,
+            show_n = show_n,
+            show_events = show_events,
+            digits = digits,
+            p_digits = p_digits,
+            labels = labels,
+            keep_models = keep_models,
+            exponentiate = exponentiate,
+            parallel = parallel,
+            n_cores = n_cores,
+            number_format = number_format,
+            verbose = verbose,
+            ...
+        )
+        ## Extract raw data for variable selection
+        uni_raw <- attr(uni_results, "raw_data")
+    }
+
+    ## Step 2: Determine predictors for multivariable model
+    multi_vars <- NULL
+    multi_model <- NULL
+    multi_results <- NULL
+    multi_raw <- NULL
+
+    if (columns %in% c("both", "multi")) {
+        if (method == "screen") {
+            ## Screen based on p-value threshold using raw data
+            if (is.null(uni_raw)) {
+                ## Need to run univariable if not already done
+                ## Only need p-values for screening, so skip counts for efficiency
+                uni_temp <- uniscreen(data, outcome, predictors, model_type, 
+                                      family, random = random,
+                                      conf_level = conf_level,
+                                      reference_rows = FALSE,
+                                      show_n = FALSE,
+                                      show_events = FALSE,
+                                      parallel = parallel, n_cores = n_cores,
+                                      number_format = number_format,
+                                      verbose = verbose,
+                                      ...)
+                uni_raw <- attr(uni_temp, "raw_data")
+            }
+            
+            ## Use raw data for filtering
+            multi_vars <- unique(uni_raw[p_value <= p_threshold]$predictor)
+            
+            if (length(multi_vars) == 0) {
+                warning("No variables meet p <= ", p_threshold, " threshold")
+                if (return_type == "model") return(NULL)
+            }
+            
+        } else if (method == "all") {
+            ## Use all predictors
+            multi_vars <- predictors
+            
+        } else if (method == "custom") {
+            ## Use specified predictors
+            multi_vars <- multi_predictors
+        }
+        
+        ## Fit multivariable model if we have predictors
+        if (length(multi_vars) > 0) {
+            message(sprintf("Fitting multivariable model with %d predictors...", 
+                            length(multi_vars)))
+            
+            multi_results <- fit(
+                data = data,
+                outcome = outcome,
+                predictors = multi_vars,
+                model_type = model_type,
+                family = family,
+                random = random,
+                conf_level = conf_level,
+                show_n = show_n,
+                show_events = show_events,
+                digits = digits,
+                p_digits = p_digits,
+                labels = labels,
+                keep_qc_stats = FALSE,  # QC stats not needed for display
+                reference_rows = reference_rows,
+                exponentiate = exponentiate,
+                number_format = number_format,
+                verbose = verbose,
+                ...
+            )
+            
+            ## Extract model and raw data
+            multi_model <- attr(multi_results, "model")
+            multi_raw <- attr(multi_results, "raw_data")
+        }
+    }
+
+    ## Step 3: Handle return types
+    if (return_type == "model") {
+        return(multi_model)
+    }
+
+    ## Step 4: Format combined output using the new formatted tables
+    result <- format_fullfit_combined(
+        uni_formatted = uni_results,
+        multi_formatted = multi_results,
+        uni_raw = uni_raw,
+        multi_raw = multi_raw,
+        predictors = predictors,
+        columns = columns,
+        metrics = metrics,
+        show_n = show_n,
+        show_events = show_events,
+        labels = labels,
+        exponentiate = exponentiate,
+        conf_level = conf_level
+    )
+
+    ## Add attributes
+    data.table::setattr(result, "outcome", outcome)
+    data.table::setattr(result, "model_type", model_type)
+    data.table::setattr(result, "method", method)
+    data.table::setattr(result, "columns", columns)
+    data.table::setattr(result, "uni_raw", uni_raw)
+    data.table::setattr(result, "multi_raw", multi_raw)
+    data.table::setattr(result, "p_threshold", p_threshold)
+    data.table::setattr(result, "n_screened", length(predictors))
+    
+    if (!is.null(random)) {
+        data.table::setattr(result, "random", random)
+    }
+
+    if (!is.null(multi_model)) {
+        data.table::setattr(result, "model", multi_model)
+    }
+
+    if (keep_models && !is.null(uni_results)) {
+        data.table::setattr(result, "uni_results", uni_results)
+    }
+
+    if (columns != "uni" && length(multi_vars) > 0) {
+        data.table::setattr(result, "n_multi", length(multi_vars))
+        data.table::setattr(result, "screened", multi_vars)
+    }
+
+    ## Extract significant variable names from multivariable model
+    if (!is.null(multi_raw) && nrow(multi_raw) > 0 &&
+        "p_value" %in% names(multi_raw) && "variable" %in% names(multi_raw)) {
+        sig_vars <- unique(
+            multi_raw[!is.na(p_value) & p_value < 0.05]$variable
+        )
+        data.table::setattr(result, "significant", sig_vars)
+    } else if (!is.null(uni_raw) && nrow(uni_raw) > 0 &&
+               "p_value" %in% names(uni_raw) && "predictor" %in% names(uni_raw)) {
+        ## Fall back to univariable if no multivariable results
+        sig_vars <- unique(
+            uni_raw[!is.na(p_value) & p_value < p_threshold]$predictor
+        )
+        data.table::setattr(result, "significant", sig_vars)
+    }
+
+    class(result) <- c("fullfit_result", class(result))
+
+    if (return_type == "both") {
+        return(list(table = result, model = multi_model))
+    } else {
+        return(result)
+    }
+}
+
+#' Format combined fullfit output from formatted tables
+#' 
+#' Merges univariable and multivariable results into a single publication-ready
+#' table with side-by-side display. Uses vectorized merge instead of per-variable loops.
+#' 
+#' @param uni_formatted Formatted data.table from univariable screening.
+#' @param multi_formatted Formatted data.table from multivariable model.
+#' @param uni_raw Raw data.table with univariable coefficients.
+#' @param multi_raw Raw data.table with multivariable coefficients.
+#' @param predictors Character vector of all predictor names.
+#' @param columns Character string specifying columns to show ("both", "uni", "multi").
+#' @param metrics Character vector specifying metrics to show ("effect", "p").
+#' @param show_n Logical whether to include sample size column.
+#' @param show_events Logical whether to include events column.
+#' @param labels Optional named character vector of variable labels.
+#' @param exponentiate Optional logical for coefficient exponentiation.
+#' @param conf_level Numeric confidence level for CI label.
+#' @return Combined data.table with aligned univariable and multivariable results.
+#' @keywords internal
+format_fullfit_combined <- function(uni_formatted, multi_formatted, 
+                                    uni_raw, multi_raw,
+                                    predictors, columns, metrics, 
+                                    show_n, show_events, labels,
+                                    exponentiate = NULL,
+                                    conf_level = 0.95) {
+    
+    ## Handle single-table cases quickly
+    if (columns == "uni" && !is.null(uni_formatted)) {
+        return(finalize_column_names(uni_formatted, uni_raw, multi_raw, 
+                                     exponentiate, columns, metrics, conf_level))
+    }
+    
+    if (columns == "multi" && !is.null(multi_formatted)) {
+        return(finalize_column_names(multi_formatted, uni_raw, multi_raw, 
+                                     exponentiate, columns, metrics, conf_level))
+    }
+    
+    ## For "both" columns, use merge approach
+    if (is.null(uni_formatted) && is.null(multi_formatted)) {
+        return(data.table::data.table())
+    }
+    
+    if (is.null(uni_formatted)) {
+        return(finalize_column_names(multi_formatted, uni_raw, multi_raw, 
+                                     exponentiate, "multi", metrics, conf_level))
+    }
+    
+    if (is.null(multi_formatted)) {
+        return(finalize_column_names(uni_formatted, uni_raw, multi_raw, 
+                                     exponentiate, "uni", metrics, conf_level))
+    }
+    
+    ## Events only apply to binomial GLM (logistic) and survival models
+    has_events <- FALSE
+    if (!is.null(uni_raw)) {
+        has_events <- !all(is.na(uni_raw$events))
+    } else if (!is.null(multi_raw)) {
+        has_events <- !all(is.na(multi_raw$events))
+    }
+    if (!has_events) show_events <- FALSE
+    
+    ## Create row keys for merging
+    ## Add row identifier within each variable group
+    uni_copy <- data.table::copy(uni_formatted)
+    multi_copy <- data.table::copy(multi_formatted)
+    
+    ## Create variable group identifier (propagate variable name to empty rows)
+    ## Use cumsum approach since nafill doesn't work with character
+    uni_copy[, .var_group_id := cumsum(Variable != "")]
+    uni_copy[, .var_group := Variable[1], by = .var_group_id]
+    uni_copy[, .row_in_var := seq_len(.N), by = .var_group_id]
+    
+    multi_copy[, .var_group_id := cumsum(Variable != "")]
+    multi_copy[, .var_group := Variable[1], by = .var_group_id]
+    multi_copy[, .row_in_var := seq_len(.N), by = .var_group_id]
+    
+    ## Identify effect and p-value columns (match any CI percentage)
+    uni_effect_col <- grep("\\([0-9]+% CI\\)$", names(uni_copy), value = TRUE)[1]
+    uni_p_col <- if ("p-value" %in% names(uni_copy)) "p-value" else NULL
+    
+    multi_effect_col <- grep("\\([0-9]+% CI\\)$", names(multi_copy), value = TRUE)[1]
+    multi_p_col <- if ("p-value" %in% names(multi_copy)) "p-value" else NULL
+    
+    ## Rename columns for merge
+    if (!is.na(uni_effect_col) && "effect" %in% metrics) {
+        data.table::setnames(uni_copy, uni_effect_col, "uni_effect")
+    }
+    if (!is.null(uni_p_col) && "p" %in% metrics) {
+        data.table::setnames(uni_copy, uni_p_col, "uni_p")
+    }
+    
+    if (!is.na(multi_effect_col) && "effect" %in% metrics) {
+        data.table::setnames(multi_copy, multi_effect_col, "multi_effect")
+    }
+    if (!is.null(multi_p_col) && "p" %in% metrics) {
+        data.table::setnames(multi_copy, multi_p_col, "multi_p")
+    }
+    
+    ## Select columns for merge
+    uni_keep <- c(".var_group", ".row_in_var", "Variable", "Group")
+    if (show_n && "n" %in% names(uni_copy)) uni_keep <- c(uni_keep, "n")
+    if (show_events && "Events" %in% names(uni_copy)) uni_keep <- c(uni_keep, "Events")
+    if ("uni_effect" %in% names(uni_copy)) uni_keep <- c(uni_keep, "uni_effect")
+    if ("uni_p" %in% names(uni_copy)) uni_keep <- c(uni_keep, "uni_p")
+    
+    uni_subset <- uni_copy[, intersect(uni_keep, names(uni_copy)), with = FALSE]
+    
+    multi_keep <- c(".var_group", ".row_in_var")
+    if ("multi_effect" %in% names(multi_copy)) multi_keep <- c(multi_keep, "multi_effect")
+    if ("multi_p" %in% names(multi_copy)) multi_keep <- c(multi_keep, "multi_p")
+    
+    multi_subset <- multi_copy[, intersect(multi_keep, names(multi_copy)), with = FALSE]
+    
+    ## Merge on variable group and row position
+    result <- merge(uni_subset, multi_subset, 
+                    by = c(".var_group", ".row_in_var"), 
+                    all.x = TRUE)
+    
+    ## Fill missing multi values with "-"
+    if ("multi_effect" %in% names(result)) {
+        result[is.na(multi_effect), multi_effect := "-"]
+    }
+    if ("multi_p" %in% names(result)) {
+        result[is.na(multi_p), multi_p := "-"]
+    }
+    
+    ## Preserve original order from uni_formatted
+    uni_copy[, .orig_order := .I]
+    result[uni_copy, .orig_order := i..orig_order, on = c(".var_group", ".row_in_var")]
+    data.table::setorder(result, .orig_order)
+    
+    ## Clean up temporary columns (only remove those that exist)
+    temp_cols <- intersect(c(".var_group", ".var_group_id", ".row_in_var", ".orig_order"), names(result))
+    if (length(temp_cols) > 0) {
+        result[, (temp_cols) := NULL]
+    }
+    
+    ## Rename columns for display
+    result <- finalize_column_names(result, uni_raw, multi_raw, exponentiate, columns, metrics, conf_level)
+    
+    return(result)
+}
+
+
+#' Finalize Column Names for Display
+#' 
+#' Renames internal column names (uni_effect, uni_p, multi_effect, multi_p) to
+#' publication-ready display names with appropriate effect measure labels
+#' (OR, HR, RR, aOR, aHR, aRR, Coefficient, \emph{etc.}).
+#' 
+#' @param result Data.table with columns to rename. Expected to contain some
+#'   combination of: uni_effect, uni_p, multi_effect, multi_p.
+#' @param uni_raw Raw univariable data.table used to determine effect type
+#'   by checking for presence of OR, HR, RR, or Coefficient columns.
+#' @param multi_raw Raw multivariable data.table used to determine adjusted
+#'   effect type.
+#' @param exponentiate Logical or \code{NULL}. If \code{TRUE}, forces 
+#'   exponentiated labels (OR, HR, RR). If \code{FALSE}, uses "Coefficient".
+#'   If \code{NULL}, auto-detects from raw data columns.
+#' @param columns Character string indicating which columns are present
+#'   (\code{"both"}, \code{"uni"}, or \code{"multi"}). Used for context but
+#'   renaming is based on actual column presence.
+#' @param metrics Character vector of metrics being displayed (\code{"effect"},
+#'   \code{"p"}, or both). Used for context.
+#' @return The input data.table with columns renamed
+#' @keywords internal
+finalize_column_names <- function(result, uni_raw, multi_raw, exponentiate, columns, metrics, conf_level = 0.95) {
+    
+    ## Format confidence level for display
+    ci_pct <- round(conf_level * 100)
+    ci_label <- paste0(ci_pct, "% CI")
+    
+    if ("uni_effect" %in% names(result)) {
+        effect_type <- determine_effect_type(uni_raw, multi_raw, exponentiate, adjusted = FALSE)
+        data.table::setnames(result, "uni_effect", paste0(effect_type, " (", ci_label, ")"))
+    }
+    
+    if ("uni_p" %in% names(result)) {
+        data.table::setnames(result, "uni_p", "Uni p")
+    }
+    
+    if ("multi_effect" %in% names(result)) {
+        effect_type <- determine_effect_type(uni_raw, multi_raw, exponentiate, adjusted = TRUE)
+        data.table::setnames(result, "multi_effect", paste0(effect_type, " (", ci_label, ")"))
+    }
+    
+    if ("multi_p" %in% names(result)) {
+        data.table::setnames(result, "multi_p", "Multi p")
+    }
+    
+    return(result)
+}
+
+
+#' Determine Effect Type Label
+#' 
+#' Identifies the appropriate effect measure label (OR, HR, RR, Coefficient,
+#' aOR, aHR, aRR, Adj. Coefficient) based on model type, exponentiation setting,
+#' and whether the estimate is adjusted (multivariable) or unadjusted (univariable).
+#' 
+#' @param uni_raw Raw univariable data.table containing coefficient columns.
+#'   Used to detect effect type when \code{adjusted = FALSE}.
+#' @param multi_raw Raw multivariable data.table containing coefficient columns.
+#'   Used to detect effect type when \code{adjusted = TRUE}.
+#' @param exponentiate Logical or \code{NULL} controlling label selection:
+#'   \describe{
+#'     \item{\code{TRUE}}{Force exponentiated labels (OR, HR, RR, Exp(Coef))}
+#'     \item{\code{FALSE}}{Force coefficient labels (Coefficient, Adj. Coefficient)}
+#'     \item{\code{NULL}}{Auto-detect from column names in raw data}
+#'   }
+#' @param adjusted Logical. If \code{TRUE}, returns adjusted effect labels
+#'   (aOR, aHR, aRR, Adj. Coefficient) for multivariable results. If \code{FALSE},
+#'   returns unadjusted labels (OR, HR, RR, Coefficient) for univariable results.
+#' @return Character string with the effect measure label:
+#' @keywords internal
+determine_effect_type <- function(uni_raw, multi_raw, exponentiate, adjusted = FALSE) {
+    raw_data <- if (adjusted) multi_raw else uni_raw
+    
+    if (!is.null(exponentiate)) {
+        if (exponentiate) {
+            if (!is.null(raw_data)) {
+                if ("OR" %in% names(raw_data)) return(if (adjusted) "aOR" else "OR")
+                if ("HR" %in% names(raw_data)) return(if (adjusted) "aHR" else "HR")
+                if ("RR" %in% names(raw_data)) return(if (adjusted) "aRR" else "RR")
+                return(if (adjusted) "Adj. Exp(Coef)" else "Exp(Coef)")
+            }
+        } else {
+            return(if (adjusted) "Adj. Coefficient" else "Coefficient")
+        }
+    }
+    
+    if (!is.null(raw_data)) {
+        if ("OR" %in% names(raw_data)) return(if (adjusted) "aOR" else "OR")
+        if ("HR" %in% names(raw_data)) return(if (adjusted) "aHR" else "HR")
+        if ("RR" %in% names(raw_data)) return(if (adjusted) "aRR" else "RR")
+    }
+    
+    ## Fallback: use Coefficient (not Estimate) for linear models
+    return(if (adjusted) "Adj. Coefficient" else "Coefficient")
+}
+
+#' Print method for fullfit results
+#' 
+#' Displays a summary header with outcome, model type, method, and number of
+#' multivariable predictors before printing the results table.
+#' 
+#' @param x fullfit_result object.
+#' @param ... Additional arguments passed to print methods.
+#' @return Invisibly returns the input object \code{x}. Called for its
+#'   side effect of printing a formatted summary to the console.
+#' @keywords internal
+#' @family regression functions
+#' @export
+print.fullfit_result <- function(x, ...) {
+    cat("\nFullfit Analysis Results\n")
+    cat("Outcome: ", attr(x, "outcome"), "\n", sep = "")
+    cat("Model Type: ", attr(x, "model_type"), "\n", sep = "")
+    
+    method <- attr(x, "method")
+    p_thresh <- attr(x, "p_threshold")
+    if (!is.null(method) && method == "screen" && !is.null(p_thresh)) {
+        cat("Method: screen (p < ", p_thresh, ")\n", sep = "")
+    } else if (!is.null(method)) {
+        cat("Method: ", method, "\n", sep = "")
+    }
+    
+    n_screened <- attr(x, "n_screened")
+    if (!is.null(n_screened)) {
+        cat("Predictors Screened: ", n_screened, "\n", sep = "")
+    }
+    
+    n_multi <- attr(x, "n_multi")
+    if (!is.null(n_multi)) {
+        cat("Multivariable Predictors: ", n_multi, "\n", sep = "")
+    }
+    
+    cat("\n")
+    ## Print as data.table, skipping uniscreen_result print method
+    print(as.data.table(x))
+    invisible(x)
+}

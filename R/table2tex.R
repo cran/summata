@@ -1,0 +1,772 @@
+#' Export Table to LaTeX Format
+#'
+#' Converts a data frame, data.table, or matrix to LaTeX source code suitable for 
+#' inclusion in LaTeX documents. Generates publication-quality table markup with 
+#' extensive formatting options including booktabs styling, color schemes, and 
+#' hierarchical displays. Output can be directly \code{\\input{}} or \code{\\include{}} 
+#' into LaTeX manuscripts. Requires \pkg{xtable} for export.
+#'
+#' @param table Data frame, data.table, or matrix to export. Can be output from 
+#'   \code{desctable()}, \code{survtable()}, \code{fit()}, \code{uniscreen()},
+#'   \code{fullfit()}, \code{compfit()}, \code{multifit()}, or any tabular data.
+#'   
+#' @param file Character string specifying the output \code{.tex} filename. Must have 
+#'   \code{.tex} extension. Example: \code{"results.tex"}, \code{"table1.tex"}.
+#'   
+#' @param caption Character string. Table caption for LaTeX caption command. 
+#'   Supports multi-line captions using double backslash. Default is \code{NULL}.
+#'
+#' @param caption_size Numeric. Caption font size in points. If \code{NULL} (default), 
+#'   caption will use the document's default caption size (typically slightly smaller 
+#'   than body text). Set to a specific value (\emph{e.g.,} 6, 7, 8, 9) to control caption 
+#'   size explicitly. This generates a LaTeX comment that you can use when wrapping 
+#'   the table. Typical range: 6-10 points.
+#'   
+#' @param format_headers Logical. If \code{TRUE}, formats column headers by 
+#'   converting underscores to spaces, italicizing statistical notation ("\emph{n}", 
+#'   "\emph{p}"), and applying title case. Default is \code{TRUE}.
+#'   
+#' @param variable_padding Logical. If \code{TRUE}, adds vertical spacing around 
+#'   variable groups using \code{\\addlinespace} for improved readability. 
+#'   Default is \code{FALSE}.
+#'   
+#' @param cell_padding Character string or numeric. Vertical padding within cells:
+#'   \itemize{
+#'     \item \code{"none"} - No extra padding
+#'     \item \code{"normal"} - Standard padding [default]
+#'     \item \code{"relaxed"} - Increased padding
+#'     \item \code{"loose"} - Maximum padding
+#'     \item Numeric - Custom \code{\\arraystretch} value
+#'   }
+#'   
+#' @param bold_significant Logical. If \code{TRUE}, wraps significant \emph{p}-values 
+#'   in \code{textbf} commands for bold display. Default is \code{TRUE}.
+#'
+#' @param bold_variables Logical. If \code{TRUE}, variable names are displayed
+#'   in bold. Default is \code{FALSE}.
+#'   
+#' @param p_threshold Numeric. Threshold for bold \emph{p}-value formatting. Only 
+#'   used when \code{bold_significant = TRUE}. Default is 0.05.
+#'   
+#' @param align Character string or vector specifying column alignment:
+#'   \itemize{
+#'     \item \code{"l"} - Left
+#'     \item \code{"c"} - Center  
+#'     \item \code{"r"} - Right
+#'     \item Paragraph column with specified width (p-type)
+#'   }
+#'   If \code{NULL}, automatically determines based on content. Can specify 
+#'   per-column as vector. Default is \code{NULL}.
+#'   
+#' @param indent_groups Logical. If \code{TRUE}, uses hspace to 
+#'   indent grouped rows, creating hierarchical display. Useful for factor 
+#'   variables in regression tables. Default is \code{FALSE}.
+#'   
+#' @param condense_table Logical. If \code{TRUE}, condenses table by showing 
+#'   only essential rows (single row for continuous, non-reference for binary). 
+#'   Automatically sets \code{indent_groups = TRUE}. Default is \code{FALSE}.
+#'   
+#' @param condense_quantitative Logical. If \code{TRUE}, condenses continuous 
+#'   and survival variables into single rows while preserving all categorical 
+#'   variable rows (including binary). Only applies to descriptive tables from 
+#'   \code{desctable()}. Automatically sets \code{indent_groups = TRUE}. Unlike 
+#'   \code{condense_table}, this does not collapse binary categorical variables. 
+#'   Default is \code{FALSE}.
+#'   
+#' @param booktabs Logical. If \code{TRUE}, uses booktabs package commands 
+#'   (toprule, midrule, bottomrule) for professional 
+#'   table rules. Requires booktabs package in LaTeX preamble. 
+#'   Default is \code{FALSE}.
+#'   
+#' @param zebra_stripes Logical. If \code{TRUE}, adds alternating row colors 
+#'   for variable groups using rowcolor command. Requires 
+#'   \code{xcolor} package with table option in preamble. Default is \code{FALSE}.
+#'   
+#' @param stripe_color Character string. LaTeX color specification for zebra 
+#'   stripes (\emph{e.g.,} \code{"gray!20"}, \code{"blue!10"}). Only used when 
+#'   \code{zebra_stripes = TRUE}. Default is \code{"gray!20"}.
+#'   
+#' @param dark_header Logical. If \code{TRUE}, creates white text on black 
+#'   background for header row. Requires \code{xcolor} package with \code{table}
+#'   option. Default is \code{FALSE}.
+#'   
+#' @param label Character string. LaTeX label for cross-references. 
+#'   Example: \code{"tab:regression"}. Default is \code{NULL}.
+#'
+#' @param show_logs Logical. If \code{TRUE}, displays informational messages 
+#'   about required LaTeX packages and formatting options applied. If 
+#'   \code{FALSE}, suppresses these messages. Default is \code{FALSE}.
+#'   
+#' @param ... Additional arguments passed to \code{\link[xtable]{xtable}}.
+#'
+#' @return Invisibly returns \code{NULL}. Creates a \code{.tex} file at the specified 
+#'   location containing a LaTeX tabular environment.
+#'
+#' @details
+#' \strong{Output Format:}
+#' 
+#' The function generates a standalone LaTeX tabular environment that can be:
+#' \enumerate{
+#'   \item Included in documents with \code{\\input} command
+#'   \item Embedded in table/figure environments
+#'   \item Used in manuscript classes (\code{article}, \code{report}, \emph{etc.})
+#' }
+#' 
+#' The output includes:
+#' \itemize{
+#'   \item Complete tabular environment with proper alignment
+#'   \item Horizontal rules (\code{\\hline} or \code{booktabs} rules)
+#'   \item Column headers with optional formatting
+#'   \item Data rows with automatic escaping of special characters
+#'   \item Optional caption and label commands
+#' }
+#' 
+#' \strong{Required LaTeX Packages:}
+#' 
+#' Add these to your LaTeX document preamble:
+#' 
+#' \emph{Always required:}
+#' \preformatted{
+#' \\usepackage[T1]{fontenc}
+#' \\usepackage[utf8]{inputenc}
+#' \\usepackage{array}
+#' \\usepackage{graphicx}  % If using resizebox
+#' }
+#' 
+#' \emph{Optional (based on parameters):}
+#' \preformatted{
+#' \\usepackage{booktabs}  % For booktabs = TRUE
+#' \\usepackage[table]{xcolor}  % For zebra_stripes or dark_header
+#' }
+#' 
+#' \strong{Booktabs Style:}
+#' 
+#' When \code{booktabs = TRUE}, the table uses publication-quality rules:
+#' \itemize{
+#'   \item \code{\\toprule} - Heavy rule at top
+#'   \item \code{\\midrule} - Medium rule below headers
+#'   \item \code{\\bottomrule} - Heavy rule at bottom
+#'   \item No vertical rules (\code{booktabs} style)
+#'   \item Better spacing around rules
+#' }
+#' 
+#' This is the preferred style for most academic journals.
+#' 
+#' \strong{Color Features:}
+#' 
+#' \emph{Zebra Stripes:}
+#' Creates alternating background colors for visual grouping:
+#' \preformatted{
+#' zebra_stripes = TRUE
+#' stripe_color = "gray!20"  # 20\% gray
+#' stripe_color = "blue!10"  # 10\% blue  
+#' }
+#' 
+#' \emph{Dark Header:}
+#' Creates high-contrast header row:
+#' \preformatted{
+#' dark_header = TRUE  # Black background, white text
+#' }
+#' 
+#' Both require the xcolor package with table option in your document.
+#' 
+#' \strong{Integration with LaTeX Documents:}
+#' 
+#' \emph{Basic inclusion:}
+#' \preformatted{
+#' \\begin{table}[htbp]
+#'   \\centering
+#'   \\caption{Regression Results}
+#'   \\label{tab:regression}
+#'   \\input{results.tex}
+#' \\end{table}
+#' }
+#' 
+#' \emph{With resizing:}
+#' \preformatted{
+#' \\begin{table}[htbp]
+#'   \\centering
+#'   \\caption{Results}
+#'   \\resizebox{\\textwidth}{!}{\\input{results.tex}}
+#' \\end{table}
+#' }
+#' 
+#' \emph{Landscape orientation:}
+#' \preformatted{
+#' \\usepackage{pdflscape}
+#' \\begin{landscape}
+#'   \\begin{table}[htbp]
+#'     \\centering
+#'     \\input{wide_results.tex}
+#'   \\end{table}
+#' \\end{landscape}
+#' }
+#' 
+#' \strong{Caption Formatting:}
+#' 
+#' Captions in the \code{caption} parameter are written as LaTeX comments in 
+#' the output file for reference. For actual LaTeX captions, wrap the table 
+#' in a table environment (see examples above).
+#' 
+#' \strong{Special Characters:}
+#' 
+#' The function automatically escapes LaTeX special characters in your data:
+#' \itemize{
+#'   \item Ampersand, percent, dollar sign, hash, underscore
+#'   \item Left and right braces
+#'   \item Tilde and caret (using \code{textasciitilde} and \code{textasciicircum})
+#' }
+#' 
+#' Variable names and labels should not include these characters unless 
+#' intentionally using LaTeX commands.
+#' 
+#' @seealso
+#' \code{\link{autotable}} for automatic format detection,
+#' \code{\link{table2pdf}} for direct PDF output,
+#' \code{\link{table2html}} for HTML tables,
+#' \code{\link{table2docx}} for Word documents,
+#' \code{\link{table2pptx}} for PowerPoint,
+#' \code{\link{table2rtf}} for Rich Text Format,
+#' \code{\link{fit}} for regression tables,
+#' \code{\link{desctable}} for descriptive tables
+#'
+#' @examples
+#' data(clintrial)
+#' data(clintrial_labels)
+#'
+#' # Create example table
+#' results <- fit(
+#'    data = clintrial,
+#'    outcome = "os_status",
+#'    predictors = c("age", "sex", "treatment", "stage"),
+#'    labels = clintrial_labels
+#' )
+#'
+#' # Example 1: Basic LaTeX export
+#' if (requireNamespace("xtable", quietly = TRUE)) {
+#'   table2tex(results, file.path(tempdir(), "basic.tex"))
+#' }
+#'
+#' \donttest{
+#' # Example 2: With booktabs for publication
+#' table2tex(results, file.path(tempdir(), "publication.tex"),
+#'        booktabs = TRUE,
+#'        caption = "Multivariable logistic regression results",
+#'        label = "tab:regression")
+#' 
+#' # Example 3: Multi-line caption with abbreviations
+#' table2tex(results, file.path(tempdir(), "detailed.tex"),
+#'        booktabs = TRUE,
+#'        caption = "Table 1: Risk Factors for Mortality\\\\
+#'                  aOR = adjusted odds ratio; CI = confidence interval\\\\
+#'                  Model adjusted for age, sex, treatment, and disease stage",
+#'        label = "tab:mortality")
+#' 
+#' # Example 4: Hierarchical display with indentation
+#' table2tex(results, file.path(tempdir(), "indented.tex"),
+#'        indent_groups = TRUE,
+#'        booktabs = TRUE)
+#' 
+#' # Example 5: Condensed table (reduced height)
+#' table2tex(results, file.path(tempdir(), "condensed.tex"),
+#'        condense_table = TRUE,
+#'        booktabs = TRUE)
+#' 
+#' # Example 6: With zebra stripes
+#' table2tex(results, file.path(tempdir(), "striped.tex"),
+#'        zebra_stripes = TRUE,
+#'        stripe_color = "gray!15",
+#'        booktabs = TRUE)
+#' # Remember to add \usepackage[table]{xcolor} to the LaTeX document
+#' 
+#' # Example 7: Dark header style
+#' table2tex(results, file.path(tempdir(), "dark_header.tex"),
+#'        dark_header = TRUE,
+#'        booktabs = TRUE)
+#' # Requires \usepackage[table]{xcolor}
+#' 
+#' # Example 8: Custom cell padding
+#' table2tex(results, file.path(tempdir(), "relaxed.tex"),
+#'        cell_padding = "relaxed",
+#'        booktabs = TRUE)
+#' 
+#' # Example 9: Custom column alignment (auto-detected by default)
+#' table2tex(results, file.path(tempdir(), "custom_align.tex"),
+#'        align = c("c", "c", "c", "c", "c", "c", "c"))
+#' 
+#' # Example 10: No header formatting (keep original names)
+#' table2tex(results, file.path(tempdir(), "raw_headers.tex"),
+#'        format_headers = FALSE)
+#' 
+#' # Example 11: Disable significance bolding
+#' table2tex(results, file.path(tempdir(), "no_bold.tex"),
+#'        bold_significant = FALSE,
+#'        booktabs = TRUE)
+#' 
+#' # Example 12: Stricter significance threshold
+#' table2tex(results, file.path(tempdir(), "strict_sig.tex"),
+#'        bold_significant = TRUE,
+#'        p_threshold = 0.01,  # Bold only if p < 0.01
+#'        booktabs = TRUE)
+#'
+#' # Example 13: With caption size control
+#' table2tex(results, file.path(tempdir(), "caption_size.tex"),
+#'        caption_size = 6,
+#'        caption = "Table 1 - Results with Compact Caption\\\\
+#'                  Smaller caption fits better on constrained pages")
+#' 
+#' # Example 14: Complete publication-ready table
+#' table2tex(results, file.path(tempdir(), "final_table1.tex"),
+#'        booktabs = TRUE,
+#'        caption = "Table 1: Multivariable Analysis of Mortality Risk Factors",
+#'        label = "tab:main_results",
+#'        indent_groups = TRUE,
+#'        zebra_stripes = FALSE,  # Many journals prefer no stripes
+#'        bold_significant = TRUE,
+#'        cell_padding = "normal")
+#' 
+#' # Example 15: Descriptive statistics table
+#' desc_table <- desctable(clintrial, by = "treatment",
+#'    variables = c("age", "sex", "bmi"), labels = clintrial_labels)
+#' 
+#' table2tex(desc_table, file.path(tempdir(), "table1_descriptive.tex"),
+#'        booktabs = TRUE,
+#'        caption = "Table 1: Baseline Characteristics",
+#'        label = "tab:baseline")
+#' 
+#' # Example 16: Model comparison table
+#' models <- list(
+#'    base = c("age", "sex"),
+#'    full = c("age", "sex", "treatment", "stage")
+#' )
+#' 
+#' comparison <- compfit(
+#'    data = clintrial,
+#'    outcome = "os_status",
+#'    model_list = models
+#' )
+#' 
+#' table2tex(comparison, file.path(tempdir(), "model_comparison.tex"),
+#'        booktabs = TRUE,
+#'        caption = "Model Comparison Statistics",
+#'        label = "tab:models")
+#' 
+#' }
+#' @family export functions
+#' @export
+table2tex <- function (table,
+                       file,
+                     format_headers = TRUE,
+                     variable_padding = FALSE, 
+                     cell_padding = "normal",
+                     bold_significant = TRUE,
+                     bold_variables = FALSE,
+                     p_threshold = 0.05,
+                     align = NULL, 
+                     indent_groups = FALSE,
+                     condense_table = FALSE,
+                     condense_quantitative = FALSE,
+                     booktabs = FALSE,
+                     zebra_stripes = FALSE,
+                     stripe_color = "gray!20",
+                     dark_header = FALSE,
+                     caption = NULL,
+                     caption_size = NULL,
+                     label = NULL,
+                     show_logs = FALSE,
+                     ...) {
+    
+    if (!requireNamespace("xtable", quietly = TRUE)) {
+        stop("Package 'xtable' required. Install with: install.packages('xtable')")
+    }
+    
+    if (!grepl("\\.tex$", tolower(file))) {
+        stop("File must have .tex extension")
+    }
+
+    ## Validate caption_size if provided
+    if (!is.null(caption_size)) {
+        if (!is.numeric(caption_size) || caption_size <= 0) {
+            stop("caption_size must be a positive numeric value")
+        }
+    }
+    
+    df <- as.data.frame(table)
+
+    ## Detect variable groups before any processing
+    var_groups <- NULL
+    if (zebra_stripes) {
+        if ("Variable" %in% names(df)) {
+            var_starts <- which(df$Variable != "" & !is.na(df$Variable))
+            if (length(var_starts) > 0) {
+                var_groups <- integer(nrow(df))
+                for (i in seq_along(var_starts)) {
+                    start_idx <- var_starts[i]
+                    end_idx <- if (i < length(var_starts)) {
+                                   var_starts[i + 1] - 1
+                               } else {
+                                   nrow(df)
+                               }
+                    var_groups[start_idx:end_idx] <- i
+                }
+            }
+        }
+    }
+
+    has_n_row <- FALSE
+    n_row_data <- NULL
+    if (nrow(df) > 0 && "Variable" %in% names(df) && df$Variable[1] == "N") {
+        has_n_row <- TRUE
+        n_row_data <- df[1, ]
+        df <- df[-1, ]  # Remove N row from data
+        ## Adjust var_groups if N row was removed
+        if (!is.null(var_groups) && length(var_groups) > 1) {
+            var_groups <- var_groups[-1]
+        }
+    }
+
+    if (condense_table) {
+        indent_groups <- TRUE
+        df <- condense_table_rows(df, indent_groups = indent_groups)
+        ## Re-detect groups after condensing
+        if (zebra_stripes && "Variable" %in% names(df)) {
+            var_starts <- which(df$Variable != "" & !is.na(df$Variable))
+            if (length(var_starts) > 0) {
+                var_groups <- integer(nrow(df))
+                for (i in seq_along(var_starts)) {
+                    start_idx <- var_starts[i]
+                    end_idx <- if (i < length(var_starts)) {
+                                   var_starts[i + 1] - 1
+                               } else {
+                                   nrow(df)
+                               }
+                    var_groups[start_idx:end_idx] <- i
+                }
+            }
+        }
+        df <- format_indented_groups(df, indent_string = "\\hspace{1em}")
+    } else if (condense_quantitative) {
+        indent_groups <- TRUE
+        df <- condense_quantitative_rows(df, indent_groups = indent_groups)
+        ## Re-detect groups after condensing
+        if (zebra_stripes && "Variable" %in% names(df)) {
+            var_starts <- which(df$Variable != "" & !is.na(df$Variable))
+            if (length(var_starts) > 0) {
+                var_groups <- integer(nrow(df))
+                for (i in seq_along(var_starts)) {
+                    start_idx <- var_starts[i]
+                    end_idx <- if (i < length(var_starts)) {
+                                   var_starts[i + 1] - 1
+                               } else {
+                                   nrow(df)
+                               }
+                    var_groups[start_idx:end_idx] <- i
+                }
+            }
+        }
+        df <- format_indented_groups(df, indent_string = "\\hspace{1em}")
+    } else if (indent_groups) {
+        df <- format_indented_groups(df, indent_string = "\\hspace{1em}")
+    }
+
+    ## Bold variable names (non-indented rows in Variable column)
+    if (bold_variables && "Variable" %in% names(df)) {
+        ## Find rows where Variable is not empty and not indented (doesn't start with \hspace)
+        var_rows <- which(!is.na(df$Variable) & 
+                          df$Variable != "" & 
+                          df$Variable != "-" &
+                          !grepl("^\\\\hspace", df$Variable))
+        if (length(var_rows) > 0) {
+            df$Variable[var_rows] <- paste0("\\textbf{", df$Variable[var_rows], "}")
+        }
+    }
+
+    if (bold_significant) {
+        df <- format_pvalues_export_tex(df, p_threshold)
+    }
+    
+    ## Track padding rows if adding padding
+    if (variable_padding && ("Variable" %in% names(df) || "variable" %in% names(df))) {
+        ## Before adding padding, adjust var_groups if necessary
+        if (!is.null(var_groups)) {
+            ## Find where padding rows will be inserted
+            padding_positions <- which(diff(var_groups) != 0)
+            ## Adjust var_groups for padding
+            new_var_groups <- integer(nrow(df) + length(padding_positions))
+            current_pos <- 1
+            for (i in seq_len(nrow(df))) {
+                new_var_groups[current_pos] <- var_groups[i]
+                current_pos <- current_pos + 1
+                if (i %in% padding_positions) {
+                    ## Padding row gets group 0 (no shading)
+                    new_var_groups[current_pos] <- 0
+                    current_pos <- current_pos + 1
+                }
+            }
+            var_groups <- new_var_groups
+        }
+        df <- add_variable_padding(df)
+    }
+    
+    ## Set up add.to.row for zebra stripes
+    add.to.row <- NULL
+    if (zebra_stripes && "Variable" %in% names(df)) {
+        ## Check if table has been indented
+        is_indented <- indent_groups || condense_table || condense_quantitative
+        
+        ## Identify padding rows (all cells empty) - these should not be striped
+        is_padding_row <- apply(df, 1, function(row) {
+            all(is.na(row) | row == "" | row == " ")
+        })
+        
+        if (is_indented) {
+            ## For indented tables - look for rows where Variable is not empty and not indented
+            var_starts <- which(!grepl("\\\\hspace", df$Variable) & 
+                                df$Variable != "" & 
+                                !is.na(df$Variable) &
+                                !is_padding_row)
+            
+            commands <- character()
+            positions <- numeric()
+            
+            for (i in seq_along(var_starts)) {
+                if (i %% 2 != 0) {  # Odd variable groups get shading
+                    start_idx <- var_starts[i]
+                    end_idx <- if (i < length(var_starts)) {
+                                   if (variable_padding) {
+                                       var_starts[i + 1] - 2
+                                   } else {
+                                       var_starts[i + 1] - 1
+                                   }
+                               } else {
+                                   nrow(df)
+                               }
+                    
+                    for (row in start_idx:end_idx) {
+                        ## Skip padding rows
+                        if (!is.na(df$Variable[row]) && !is_padding_row[row]) {
+                            commands <- c(commands, paste0("\\rowcolor{", stripe_color, "}"))
+                            positions <- c(positions, row - 1)
+                        }
+                    }
+                }
+            }
+            
+            if (length(commands) > 0) {
+                add.to.row <- list(pos = as.list(positions), command = commands)
+            }
+        } else if ("Group" %in% names(df)) {
+            ## For non-indented tables with Group column
+            var_starts <- which(df$Variable != "" & !is.na(df$Variable) & !is_padding_row)
+            
+            commands <- character()
+            positions <- numeric()
+            
+            for (i in seq_along(var_starts)) {
+                if (i %% 2 != 0) {
+                    start_idx <- var_starts[i]
+                    end_idx <- if (i < length(var_starts)) {
+                                   if (variable_padding) {
+                                       var_starts[i + 1] - 2
+                                   } else {
+                                       var_starts[i + 1] - 1
+                                   }
+                               } else {
+                                   nrow(df)
+                               }
+                    
+                    for (row in start_idx:end_idx) {
+                        ## Skip padding rows
+                        if (!is.na(df$Variable[row]) && !is_padding_row[row]) {
+                            commands <- c(commands, paste0("\\rowcolor{", stripe_color, "}"))
+                            positions <- c(positions, row - 1)
+                        }
+                    }
+                }
+            }
+            
+            if (length(commands) > 0) {
+                add.to.row <- list(pos = as.list(positions), command = commands)
+            }
+        } else if (!is.null(var_groups)) {
+            ## Use var_groups for simpler tables
+            commands <- character()
+            positions <- numeric()
+            
+            for (i in seq_len(nrow(df))) {
+                ## Skip padding rows (var_groups == 0 or is_padding_row)
+                if (var_groups[i] %% 2 != 0 && var_groups[i] > 0 && !is_padding_row[i]) {
+                    commands <- c(commands, paste0("\\rowcolor{", stripe_color, "}"))
+                    positions <- c(positions, i - 1)
+                }
+            }
+            
+            if (length(commands) > 0) {
+                add.to.row <- list(pos = as.list(positions), command = commands)
+            }
+        }
+    }
+    
+    ## Add cell padding command if requested
+    ## Determine array stretch value for cell padding
+    array_stretch <- switch(as.character(cell_padding),
+                            "none" = NULL,
+                            "normal" = "1.3",
+                            "relaxed" = "1.5",
+                            "loose" = "1.8",
+                            {
+                                ## If numeric value provided
+                                if (is.numeric(cell_padding)) {
+                                    as.character(cell_padding)
+                                } else {
+                                    "1.3"  # Default to normal
+                                }
+                            })
+    
+    ## Add arraystretch command at the beginning of the table
+    if (!is.null(array_stretch)) {
+        arraystretch_command <- sprintf("\\renewcommand{\\arraystretch}{%s}", array_stretch)
+        
+        if (!is.null(add.to.row) && length(add.to.row$pos) > 0) {
+            ## Check if position -1 already exists
+            if (-1 %in% unlist(add.to.row$pos)) {
+                ## Find the index and prepend to that command
+                idx <- which(unlist(add.to.row$pos) == -1)
+                add.to.row$command[idx] <- paste0(arraystretch_command, " ", add.to.row$command[idx])
+            } else {
+                ## Add as first command
+                add.to.row$pos <- c(list(-1), add.to.row$pos)
+                add.to.row$command <- c(arraystretch_command, add.to.row$command)
+            }
+        } else {
+            ## Create new add.to.row with arraystretch
+            add.to.row <- list(
+                pos = list(-1),
+                command = arraystretch_command
+            )
+        }
+    }
+    
+    if (is.null(align)) {
+        align <- determine_alignment(df)
+    }
+    
+    ## Store original column names before formatting
+    original_col_names <- names(df)
+    
+    if (format_headers) {
+        if (has_n_row) {
+            names(df) <- format_column_headers_with_n_tex(names(df), n_row_data)
+        } else {
+            names(df) <- format_column_headers(names(df))
+        }
+    }
+    
+    if (dark_header) {
+        ## Wrap each column name with the white color command
+        col_names <- names(df)
+        for (i in seq_along(col_names)) {
+            col_names[i] <- paste0("\\color{white}", col_names[i])
+        }
+        names(df) <- col_names
+        
+        ## Add the rowcolor command (without the color command)
+        header_command <- "\\rowcolor{black}"
+        
+        if (!is.null(add.to.row) && length(add.to.row$pos) > 0) {
+            ## Check if we need to combine with arraystretch at position -1
+            if (-1 %in% unlist(add.to.row$pos)) {
+                ## Find the index and append to that command
+                idx <- which(unlist(add.to.row$pos) == -1)
+                add.to.row$command[idx] <- paste0(add.to.row$command[idx], " ", header_command)
+            } else {
+                ## Prepend header command
+                add.to.row$pos <- c(list(-1), add.to.row$pos)
+                add.to.row$command <- c(header_command, add.to.row$command)
+            }
+        } else {
+            ## Create new add.to.row
+            add.to.row <- list(
+                pos = list(-1),
+                command = header_command
+            )
+        }
+    }
+    
+    xt <- xtable::xtable(df,
+                         align = align,
+                         caption = caption, 
+                         label = label, ...)
+    
+    ## Prepare file output with necessary package declarations if needed
+    file_conn <- file(file, "w")
+    
+    ## Write comment about required packages if using special features
+    if (dark_header || zebra_stripes) {
+        writeLines("% This table requires \\usepackage[table]{xcolor} in your LaTeX preamble", file_conn)
+    }
+    if (!is.null(array_stretch)) {
+        writeLines(sprintf("%% Cell padding applied with \\arraystretch{%s}", array_stretch), file_conn)
+    }
+    if (!is.null(caption)) {
+        writeLines(sprintf("%% Caption: %s", caption), file_conn)
+    }
+    if (!is.null(caption_size)) {
+        baseline_skip <- ceiling(caption_size * 1.2)
+        writeLines(sprintf("%% To apply caption font size, wrap caption in: {\\fontsize{%d}{%d}\\selectfont ...}", 
+                           caption_size, baseline_skip), file_conn)
+        writeLines(sprintf("%% Example: {\\fontsize{%d}{%d}\\selectfont\\caption{%s}}", 
+                           caption_size, baseline_skip, 
+                           if(!is.null(caption)) caption else "Your caption here"), file_conn)
+    }
+    if (!is.null(label)) {
+        writeLines(sprintf("%% Label: %s", label), file_conn)
+    }
+    
+    close(file_conn)
+    
+    ## Print with or without add.to.row commands
+    if (!is.null(add.to.row) && length(add.to.row$pos) > 0) {
+        print(xt,
+              file = file,
+              append = TRUE,  # Append after our comments
+              include.rownames = FALSE,
+              booktabs = booktabs, 
+              floating = FALSE,
+              add.to.row = add.to.row,
+              sanitize.text.function = sanitize_for_latex, 
+              sanitize.rownames.function = sanitize_for_latex,
+              sanitize.colnames.function = function(x) x,
+              hline.after = c(-1, 0, nrow(xt)))
+    } else {
+        print(xt,
+              file = file,
+              append = TRUE,  # Append after our comments
+              include.rownames = FALSE,
+              booktabs = booktabs, 
+              floating = FALSE,
+              sanitize.text.function = sanitize_for_latex, 
+              sanitize.rownames.function = sanitize_for_latex,
+              sanitize.colnames.function = function(x) x,
+              hline.after = c(-1, 0, nrow(xt)))
+    }
+    
+    ## Add a note about required packages if using special features
+    if (show_logs) {
+        if (dark_header || zebra_stripes) {
+            message("Note: This table requires \\usepackage[table]{xcolor} in your LaTeX preamble")
+        }
+        if (!is.null(array_stretch) && cell_padding != "none") {
+            message(sprintf("Note: Cell padding applied with \\arraystretch{%s}", array_stretch))
+        }
+        if (!is.null(caption_size)) {
+            baseline_skip <- ceiling(caption_size * 1.2)
+            message(sprintf("Note: To use %dpt caption, wrap caption in: {\\fontsize{%d}{%d}\\selectfont ...}", 
+                            caption_size, caption_size, baseline_skip))
+        }
+    }
+    
+    message(sprintf("Table exported to %s", file))
+    
+    invisible(NULL)
+}

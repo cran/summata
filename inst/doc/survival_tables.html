@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Survival Tables</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Survival Tables</h1>
+
+
+
+<p>Survival analysis requires specialized summary tables that report
+time-to-event outcomes in formats appropriate for longitudinal research.
+While <code>desctable()</code> includes basic survival summaries (median
+with 95% CI), detailed survival analysis often requires more
+comprehensive reporting: survival probabilities at specified time
+points, multiple quantiles, and group comparisons with appropriate
+statistical tests.</p>
+<p>The <code>survtable()</code> function generates publication-ready
+survival tables with flexible output options. It uses the familiar
+<code>Surv()</code> syntax for specifying survival outcomes and adheres
+to the standard <code>summata</code> calling convention:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">survtable</span>(data, outcome, by, times, probs, ...)</span></code></pre></div>
+<p>where <code>data</code> is the dataset, <code>outcome</code>
+specifies the survival endpoint using <code>Surv()</code> notation,
+<code>by</code> defines the grouping variable, <code>times</code>
+specifies landmark time points, and <code>probs</code> specifies
+survival quantiles to report.</p>
+<hr />
+<div id="preliminaries" class="section level1">
+<h1>Preliminaries</h1>
+<p>The examples in this vignette use the <code>clintrial</code> dataset
+included with <code>summata</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(summata)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">library</span>(survival)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">data</span>(clintrial)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">data</span>(clintrial_labels)</span></code></pre></div>
+<p>The <code>clintrial</code> dataset contains 850 observations with
+time-to-event variables suitable for demonstrating survival
+summaries.</p>
+<hr />
+</div>
+<div id="landmark-survival-estimates" class="section level1">
+<h1>Landmark Survival Estimates</h1>
+<p>Landmark survival estimates report the probability of survival at
+specific time points (<em>e.g.</em>, 1-year, 2-year survival rates).</p>
+<div id="example-1-basic-landmark-analysis" class="section level2">
+<h2><strong>Example 1:</strong> Basic Landmark Analysis</h2>
+<p>The following example reports survival probabilities at 12, 24, and
+36 months (with the default median survival reporting included):</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>example1 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;treatment&quot;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>, <span class="dv">36</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;months&quot;</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>example1</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; Stratified by: treatment</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; Time points: 12, 24, 36 months</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; Quantiles: 50%</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;    Variable    12 months    24 months    36 months  Median (95% CI) p-value</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt;      &lt;char&gt;       &lt;char&gt;       &lt;char&gt;       &lt;char&gt;           &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 1:    Total 59% (56-62%) 46% (43-49%) 36% (33-40%) 19.4 (16.2-23.4) &lt; 0.001</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 2:  Control 55% (49-63%) 37% (31-44%) 26% (20-33%) 14.7 (10.5-19.2)        </span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 3:   Drug A 68% (63-74%) 56% (51-62%) 48% (42-54%) 33.6 (24.5-42.2)        </span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; 4:   Drug B 54% (49-59%) 43% (38-48%) 33% (28-38%) 14.7 (11.0-21.8)</span></span></code></pre></div>
+</div>
+<div id="example-2-remove-median-survival-column" class="section level2">
+<h2><strong>Example 2:</strong> Remove Median Survival Column</h2>
+<p>By default, a column showing median survival is displayed
+(<code>probs = 0.5</code>). To remove it, set
+<code>probs = NULL</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>example2 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;treatment&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">probs =</span> <span class="cn">NULL</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;months&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">total =</span> <span class="cn">FALSE</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>example2</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; Stratified by: treatment</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; Time points: 12, 24 months</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt;    Variable    12 months    24 months p-value</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt;      &lt;char&gt;       &lt;char&gt;       &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; 1:  Control 55% (49-63%) 37% (31-44%) &lt; 0.001</span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; 2:   Drug A 68% (63-74%) 56% (51-62%)        </span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; 3:   Drug B 54% (49-59%) 43% (38-48%)</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="survival-quantiles" class="section level1">
+<h1>Survival Quantiles</h1>
+<p>Survival quantiles report the time at which a specified proportion of
+subjects have experienced the event. The median survival time (50th
+percentile) is the most common, but other quantiles provide additional
+context.</p>
+<div id="example-3-survival-quartiles" class="section level2">
+<h2><strong>Example 3:</strong> Survival Quartiles</h2>
+<p>Report multiple survival quantiles by specifying the
+<code>probs</code> parameter:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>example3 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;stage&quot;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>),</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">labels =</span> clintrial_labels</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>example3</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Stratified by: stage</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; Quantiles: 25%, 50%, 75%</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;    Variable 75% Survival Time (95% CI)  Median (95% CI) 25% Survival Time (95% CI) p-value</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;      &lt;char&gt;                     &lt;char&gt;           &lt;char&gt;                     &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; 1:    Total              5.1 (4.3-6.1) 19.5 (16.1-23.5)                         NR &lt; 0.001</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 2:        I             9.0 (7.4-12.5) 33.7 (22.4-45.2)                         NR        </span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 3:       II             7.7 (6.1-12.3) 32.2 (24.8-42.0)                         NR        </span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 4:      III              3.9 (3.0-5.2) 13.7 (10.4-22.3)             44.7 (35.8-NR)        </span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 5:       IV              2.0 (1.4-2.8)    5.9 (4.3-8.2)           15.6 (10.8-26.7)</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="multiple-endpoints" class="section level1">
+<h1>Multiple Endpoints</h1>
+<p>Studies often include multiple time-to-event outcomes, such as
+progression-free survival (PFS) and overall survival (OS). The
+<code>survtable()</code> function handles multiple endpoints in a single
+call.</p>
+<div id="example-4-pfs-and-os-comparison" class="section level2">
+<h2><strong>Example 4:</strong> PFS and OS Comparison</h2>
+<p>Pass a vector of outcomes to compare multiple survival endpoints:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>example4 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="fu">c</span>(<span class="st">&quot;Surv(pfs_months, pfs_status)&quot;</span>, <span class="st">&quot;Surv(os_months, os_status)&quot;</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;treatment&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fl">0.5</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;months&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">total =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">labels =</span> <span class="fu">c</span>(</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>    <span class="st">&quot;Surv(pfs_months, pfs_status)&quot;</span> <span class="ot">=</span> <span class="st">&quot;Progression-Free Survival&quot;</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    <span class="st">&quot;Surv(os_months, os_status)&quot;</span> <span class="ot">=</span> <span class="st">&quot;Overall Survival&quot;</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  )</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>)</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>example4</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; Outcomes: 2</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; Stratified by: treatment</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt; Time points: 12, 24 months</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt; Quantiles: 50%</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank</span></span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a><span class="co">#&gt;                     Variable   Group    12 months    24 months  Median (95% CI) p-value</span></span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a><span class="co">#&gt;                       &lt;char&gt;  &lt;char&gt;       &lt;char&gt;       &lt;char&gt;           &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a><span class="co">#&gt; 1: Progression-Free Survival Control 29% (23-36%)  14% (9-20%)    4.7 (3.6-6.9) &lt; 0.001</span></span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a><span class="co">#&gt; 2:                            Drug A 44% (39-51%) 30% (25-36%)   9.0 (7.5-12.4)        </span></span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a><span class="co">#&gt; 3:                            Drug B 30% (26-36%) 18% (14-22%)    4.7 (3.7-6.2)        </span></span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a><span class="co">#&gt; 4:          Overall Survival Control 55% (49-63%) 37% (31-44%) 14.7 (10.5-19.2) &lt; 0.001</span></span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a><span class="co">#&gt; 5:                            Drug A 68% (63-74%) 56% (51-62%) 33.6 (24.5-42.2)        </span></span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a><span class="co">#&gt; 6:                            Drug B 54% (49-59%) 43% (38-48%) 14.7 (11.0-21.8)</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="output-variations" class="section level1">
+<h1>Output Variations</h1>
+<div id="example-5-cumulative-event-rates" class="section level2">
+<h2><strong>Example 5:</strong> Cumulative Event Rates</h2>
+<p>For competing risks analyses or when reporting event rates rather
+than survival probabilities, use <code>type = &quot;risk&quot;</code> to display
+cumulative incidence (1 − survival):</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>example5 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;treatment&quot;</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>, <span class="dv">36</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;risk&quot;</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;months&quot;</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>example5</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; Stratified by: treatment</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; Time points: 12, 24, 36 months</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; Quantiles: 50%</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="co">#&gt; Statistic: Cumulative incidence</span></span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt;    Variable    12 months    24 months    36 months  Median (95% CI) p-value</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt;      &lt;char&gt;       &lt;char&gt;       &lt;char&gt;       &lt;char&gt;           &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 1:    Total 41% (38-44%) 54% (51-57%) 64% (60-67%) 19.4 (16.2-23.4) &lt; 0.001</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 2:  Control 45% (37-51%) 63% (56-69%) 74% (67-80%) 14.7 (10.5-19.2)        </span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 3:   Drug A 32% (26-37%) 44% (38-49%) 52% (46-58%) 33.6 (24.5-42.2)        </span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt; 4:   Drug B 46% (41-51%) 57% (52-62%) 67% (62-72%) 14.7 (11.0-21.8)</span></span></code></pre></div>
+</div>
+<div id="example-6-including-at-risk-counts" class="section level2">
+<h2><strong>Example 6:</strong> Including At-Risk Counts</h2>
+<p>The number at risk at each time point provides context for the
+precision of survival estimates:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>example6 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;treatment&quot;</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">stats =</span> <span class="fu">c</span>(<span class="st">&quot;survival&quot;</span>, <span class="st">&quot;ci&quot;</span>, <span class="st">&quot;n_risk&quot;</span>),</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;months&quot;</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">total =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>)</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>example6</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; Stratified by: treatment</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; Time points: 12, 24 months</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; Quantiles: 50%</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt;    Variable              12 months              24 months  Median (95% CI) p-value</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt;      &lt;char&gt;                 &lt;char&gt;                 &lt;char&gt;           &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; 1:  Control 55% (49-63%) [n = 106]  37% (31-44%) [n = 70] 14.7 (10.5-19.2) &lt; 0.001</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; 2:   Drug A 68% (63-74%) [n = 192] 56% (51-62%) [n = 154] 33.6 (24.5-42.2)        </span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; 3:   Drug B 54% (49-59%) [n = 190] 43% (38-48%) [n = 145] 14.7 (11.0-21.8)</span></span></code></pre></div>
+<hr />
+</div>
+</div>
+<div id="pairing-with-kaplan-meier-curves" class="section level1">
+<h1>Pairing with Kaplan-Meier Curves</h1>
+<p>Survival tables are often presented alongside Kaplan-Meier curves in
+publications. While <code>summata</code> focuses on tabular output, the
+<code>survminer</code> and <code>ggsurvfit</code> packages provide
+excellent options for survival curves.</p>
+<div id="example-7-coordinated-figure-table-output" class="section level2">
+<h2><strong>Example 7:</strong> Coordinated Figure-Table Output</h2>
+<p>The following workflow produces a matched figure-table pair suitable
+for publication:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(ggsurvfit)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(survival)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co"># Fit the survival model</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>km_fit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(<span class="fu">Surv</span>(os_months, os_status) <span class="sc">~</span> treatment, <span class="at">data =</span> clintrial)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co"># Create Kaplan-Meier plot with risk table</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="fu">ggsurvfit</span>(km_fit) <span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="fu">add_confidence_interval</span>() <span class="sc">+</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="fu">add_risktable</span>() <span class="sc">+</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="fu">add_quantile</span>(<span class="at">y_value =</span> <span class="fl">0.5</span>, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="fu">scale_ggsurvfit</span>() <span class="sc">+</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Overall Survival by Treatment&quot;</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;Time (months)&quot;</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">&quot;Survival Probability&quot;</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co"># Generate the companion table</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>surv_table <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;treatment&quot;</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>  <span class="at">times =</span> <span class="fu">c</span>(<span class="dv">12</span>, <span class="dv">24</span>, <span class="dv">36</span>),</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fl">0.5</span>,</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>  <span class="at">time_unit =</span> <span class="st">&quot;months&quot;</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>)</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co"># Export both for publication</span></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;km_curve.pdf&quot;</span>), <span class="at">width =</span> <span class="dv">8</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="fu">table2pdf</span>(surv_table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;survival_table.pdf&quot;</span>), </span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>          <span class="at">caption =</span> <span class="st">&quot;Table 2. Survival Estimates by Treatment Group&quot;</span>)</span></code></pre></div>
+<p>This workflow ensures that the Kaplan-Meier curve and survival table
+report consistent time points and groupings.</p>
+<hr />
+</div>
+</div>
+<div id="exporting-tables" class="section level1">
+<h1>Exporting Tables</h1>
+<p>Survival tables can be exported to various formats using the standard
+<code>summata</code> export functions. See the <a href="table_export.html">Table Export</a> vignette for comprehensive
+documentation.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Microsoft Word</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">table =</span> example1,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;SurvivalTable.docx&quot;</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Survival Estimates by Treatment Group&quot;</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co"># PDF (requires LaTeX)</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">table =</span> example1,</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;SurvivalTable.pdf&quot;</span>),</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Survival Estimates by Treatment Group&quot;</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>)</span></code></pre></div>
+<hr />
+</div>
+<div id="best-practices" class="section level1">
+<h1>Best Practices</h1>
+<div id="time-point-selection" class="section level2">
+<h2>Time Point Selection</h2>
+<p>When selecting landmark time points, consider the following:</p>
+<ol style="list-style-type: decimal">
+<li>Use clinically meaningful intervals (e.g., 1-year, 2-year for
+oncology)</li>
+<li>Ensure adequate follow-up at selected time points</li>
+<li>Match time points across treatment arms for comparability</li>
+<li>Consider the median follow-up when selecting the latest time
+point</li>
+</ol>
+</div>
+<div id="reporting-recommendations" class="section level2">
+<h2>Reporting Recommendations</h2>
+<ol style="list-style-type: decimal">
+<li>Always report confidence intervals alongside point estimates</li>
+<li>Include the number at risk when space permits</li>
+<li>Specify the time unit in table headers or footnotes</li>
+<li>Use consistent decimal precision across estimates</li>
+</ol>
+<hr />
+</div>
+</div>
+<div id="further-reading" class="section level1">
+<h1>Further Reading</h1>
+<ul>
+<li><a href="descriptive_tables.html">Descriptive Tables</a>:
+<code>desctable()</code> for baseline characteristics</li>
+<li><a href="regression_modeling.html">Regression Modeling</a>:
+<code>fit()</code>, <code>uniscreen()</code>, and
+<code>fullfit()</code></li>
+<li><a href="model_comparison.html">Model Comparison</a>:
+<code>compfit()</code> for comparing models</li>
+<li><a href="table_export.html">Table Export</a>: Export to PDF, Word,
+and other formats</li>
+<li><a href="forest_plots.html">Forest Plots</a>: Visualization of
+regression results</li>
+<li><a href="multivariate_regression.html">Multivariate Regression</a>:
+<code>multifit()</code> for multi-outcome analysis</li>
+<li><a href="advanced_workflows.html">Advanced Workflows</a>:
+Interactions and mixed-effects models</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

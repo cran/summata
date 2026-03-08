@@ -1,0 +1,419 @@
+#' Create Forest Plot with Automatic Model Detection
+#'
+#' A convenience wrapper function that automatically detects the input type and
+#' routes to the appropriate specialized forest plot function. This eliminates
+#' the need to remember which forest function to call for different model types
+#' or analysis objects, making it ideal for exploratory analysis and rapid prototyping.
+#'
+#' @param x One of the following:
+#'   \itemize{
+#'     \item A fitted model object: \code{glm}, \code{lm}, \code{coxph}, \emph{etc.}
+#'     \item A \code{fit_result} object from \code{fit()}
+#'     \item A \code{fullfit_result} object from \code{fullfit()}
+#'     \item A \code{uniscreen_result} object from \code{uniscreen()}
+#'     \item A \code{multifit_result} object from \code{multifit()}
+#'   }
+#'
+#' @param data Data frame or data.table containing the original data. Required 
+#'   when \code{x} is a raw model object. Ignored when \code{x} is a result object
+#'   from \code{fit()}, \code{fullfit()}, \code{uniscreen()}, or \code{multifit()}
+#'   since these contain embedded data.
+#'
+#' @param title Character string for plot title. If \code{NULL} (default), an 
+#'   appropriate title is generated based on the detected model type:
+#'   \itemize{
+#'     \item Cox models: "Cox Proportional Hazards Model"
+#'     \item Logistic regression: "Logistic Regression Model"
+#'     \item Poisson regression: "Poisson Regression Model"
+#'     \item Linear regression: "Linear Regression Model"
+#'     \item Uniscreen results: "Univariable [Type] Screening"
+#'     \item Multifit results: "Multivariate [Type] Analysis"
+#'   }
+#'
+#' @param ... Additional arguments passed to the specific forest plot function.
+#'   Common arguments include:
+#'   \describe{
+#'     \item{labels}{Named character vector for variable labels}
+#'     \item{digits}{Number of decimal places for estimates (default 2)}
+#'     \item{p_digits}{Number of decimal places for \emph{p}-values (default 3)}
+#'     \item{conf_level}{Confidence level for intervals (default 0.95)}
+#'     \item{show_n}{Logical, show sample sizes (default \code{TRUE})}
+#'     \item{show_events}{Logical, show event counts (default \code{TRUE} for survival/binomial)}
+#'     \item{qc_footnote}{Logical, show model QC stats in footer (default \code{TRUE})}
+#'     \item{zebra_stripes}{Logical, alternating row shading (default \code{TRUE})}
+#'     \item{indent_groups}{Logical, indent factor levels (default \code{FALSE})}
+#'     \item{color}{Color for point estimates}
+#'     \item{table_width}{Proportion of width for table (default 0.6)}
+#'     \item{plot_width, plot_height}{Explicit dimensions}
+#'     \item{units}{Dimension units: \code{"in"}, \code{"cm"}, or \code{"mm"}}
+#'   }
+#'   See the documentation for the specific forest function for all available options.
+#'
+#' @return A \code{ggplot} object containing the complete forest plot. The plot 
+#'   can be:
+#'   \itemize{
+#'     \item Displayed directly: \code{print(plot)}
+#'     \item Saved to file: \code{ggsave("forest.pdf", plot, width = 12, height = 8)}
+#'     \item Further customized with \pkg{ggplot2} functions
+#'   }
+#'   
+#'   The returned object includes an attribute \code{"rec_dims"} 
+#'   accessible via \code{attr(plot, "rec_dims")}, which is a list 
+#'   containing:
+#'   \describe{
+#'     \item{width}{Numeric. Recommended plot width in specified units}
+#'     \item{height}{Numeric. Recommended plot height in specified units}
+#'   }
+#'   
+#'   These recommendations are automatically calculated based on the number of 
+#'   variables, text sizes, and layout parameters, and are printed to console 
+#'   if \code{plot_width} or \code{plot_height} are not specified.
+#'
+#' @details
+#'
+#' This function provides a convenient wrapper around the specialized forest
+#' plot functions, automatically routing to the appropriate function based on
+#' the model class or result type. All parameters are passed through to the
+#' underlying function, so the full range of options remains available.
+#' 
+#' For model-specific advanced features, individual forest functions may be
+#' called directly.
+#'
+#' \strong{Automatic Detection Logic:}
+#' 
+#' The function uses the following priority order for detection:
+#' \enumerate{
+#'   \item \strong{uniscreen results}: Detected by class \code{"uniscreen_result"} or
+#'     presence of attributes \code{outcome}, \code{predictors}, \code{model_type},
+#'     and \code{model_scope = "Univariable"}. Routes to \code{uniforest()}.
+#'   \item \strong{multifit results}: Detected by presence of attributes 
+#'     \code{predictor}, \code{outcomes}, \code{model_type}, and \code{raw_data}.
+#'     Routes to \code{multiforest()}.
+#'   \item \strong{Cox models}: Classes \code{coxph} or \code{clogit}. Routes to 
+#'     \code{coxforest()}.
+#'   \item \strong{GLM models}: Class \code{glm}. Routes to \code{glmforest()}.
+#'   \item \strong{Linear models}: Class \code{lm} (but not \code{glm}). Routes to 
+#'     \code{lmforest()}.
+#' }
+#' 
+#' @seealso 
+#' \code{\link{glmforest}} for GLM forest plots,
+#' \code{\link{coxforest}} for Cox model forest plots,
+#' \code{\link{lmforest}} for linear model forest plots,
+#' \code{\link{uniforest}} for univariable screening forest plots,
+#' \code{\link{multiforest}} for multi-outcome forest plots,
+#' \code{\link{fit}} for single-model regression,
+#' \code{\link{fullfit}} for combined univariable/multivariable regression,
+#' \code{\link{uniscreen}} for univariable screening,
+#' \code{\link{multifit}} for multi-outcome analysis
+#'
+#' @examples
+#' data(clintrial)
+#' data(clintrial_labels)
+#' library(survival)
+#'
+#' # Create example model
+#' glm_model <- glm(surgery ~ age + sex + bmi + smoking,
+#'                  family = binomial, data = clintrial)
+#'
+#' # Example 1: Logistic regression model
+#' p <- autoforest(glm_model, data = clintrial)
+#' # Automatically detects GLM and routes to glmforest()
+#'
+#' \donttest{
+#'
+#' # Example 2: Cox proportional hazards model
+#' cox_model <- coxph(Surv(os_months, os_status) ~ age + sex + treatment + stage,
+#'                    data = clintrial)
+#' 
+#' plot2 <- autoforest(cox_model, data = clintrial)
+#' # Automatically detects coxph and routes to coxforest()
+#' 
+#' # Example 3: Linear regression model
+#' lm_model <- lm(biomarker_x ~ age + sex + bmi + treatment, data = clintrial)
+#' 
+#' plot3 <- autoforest(lm_model, data = clintrial)
+#' # Automatically detects lm and routes to lmforest()
+#' 
+#' # Example 4: With custom labels and formatting options
+#' plot4 <- autoforest(
+#'     cox_model,
+#'     data = clintrial,
+#'     labels = clintrial_labels,
+#'     title = "Prognostic Factors for Overall Survival",
+#'     zebra_stripes = TRUE,
+#'     indent_groups = TRUE
+#' )
+#' 
+#' # Example 5: From fit() result - data and labels extracted automatically
+#' fit_result <- fit(
+#'     data = clintrial,
+#'     outcome = "surgery",
+#'     predictors = c("age", "sex", "bmi", "treatment"),
+#'     labels = clintrial_labels
+#' )
+#' 
+#' plot5 <- autoforest(fit_result)
+#' # No need to pass data or labels - extracted from fit_result
+#' 
+#' # Save with recommended dimensions
+#' dims <- attr(plot5, "rec_dims")
+#' ggplot2::ggsave(file.path(tempdir(), "forest.pdf"),
+#'                 plot5, width = dims$width, height = dims$height)
+#'
+#' }
+#' @family visualization functions
+#' @export
+autoforest <- function(x, data = NULL, title = NULL, ...) {
+    
+    ## First check if this is a fit_result or fullfit_result
+    ## These contain a model object that should be extracted and routed
+    if (inherits(x, "fit_result") || inherits(x, "fullfit_result")) {
+        ## Extract the model from the result
+        model <- attr(x, "model")
+        
+        if (is.null(model)) {
+            stop("The fit_result/fullfit_result does not contain a model.\n",
+                 "This may occur if fullfit() was run with columns='uni' only.")
+        }
+        
+        ## Extract data if not provided
+        if (is.null(data)) {
+            data <- attr(x, "data")
+        }
+        
+        ## Extract labels from the result's ... or attributes
+        dots <- list(...)
+        if (is.null(dots$labels)) {
+            result_labels <- attr(x, "labels")
+            if (!is.null(result_labels)) {
+                dots$labels <- result_labels
+            }
+        }
+        
+        ## Determine model type and route to appropriate forest function
+        if (inherits(model, "coxph") || inherits(model, "clogit") || inherits(model, "coxme")) {
+            if (is.null(title)) {
+                if (inherits(model, "coxme")) {
+                    title <- "Mixed-Effects Cox Proportional Hazards"
+                } else if (inherits(model, "clogit")) {
+                    title <- "Conditional Logistic Regression"
+                } else {
+                    title <- "Cox Proportional Hazards Model"
+                }
+            }
+            return(do.call(coxforest, c(list(x = x, data = data, title = title), dots)))
+            
+        } else if (inherits(model, "glmerMod")) {
+            family_name <- model@resp$family$family
+            if (is.null(title)) {
+                if (family_name == "binomial") {
+                    title <- "Mixed-Effects Logistic Regression"
+                } else if (family_name == "poisson") {
+                    title <- "Mixed-Effects Poisson Regression"
+                } else {
+                    title <- "Mixed-Effects Generalized Linear Model"
+                }
+            }
+            return(do.call(glmforest, c(list(x = x, data = data, title = title), dots)))
+            
+        } else if (inherits(model, "lmerMod")) {
+            if (is.null(title)) title <- "Mixed-Effects Linear Regression"
+            return(do.call(lmforest, c(list(x = x, data = data, title = title), dots)))
+            
+        } else if (inherits(model, "glm")) {
+            if (is.null(title)) {
+                if (model$family$family == "binomial") {
+                    title <- "Logistic Regression Model"
+                } else if (model$family$family == "poisson") {
+                    title <- "Poisson Regression Model"
+                } else {
+                    title <- "Generalized Linear Model"
+                }
+            }
+            return(do.call(glmforest, c(list(x = x, data = data, title = title), dots)))
+            
+        } else if (inherits(model, "lm")) {
+            if (is.null(title)) title <- "Linear Regression Model"
+            return(do.call(lmforest, c(list(x = x, data = data, title = title), dots)))
+            
+        } else {
+            stop("Model type in fit_result/fullfit_result is not supported for forest plots.")
+        }
+    }
+    
+    ## Check if this is a uniscreen result
+    if (is_uniscreen_result(x)) {
+        ## Generate appropriate title if not provided
+        if (is.null(title)) {
+            model_type <- attr(x, "model_type")
+            title <- switch(model_type,
+                            "glm" = "Univariable Logistic Regression Screening",
+                            "coxph" = "Univariable Survival Analysis Screening",
+                            "lm" = "Univariable Linear Regression Screening",
+                            "glmer" = "Univariable Mixed-Effects Logistic Screening",
+                            "lmer" = "Univariable Mixed-Effects Linear Screening",
+                            "coxme" = "Univariable Mixed-Effects Survival Screening",
+                            "Univariable Screening"
+                            )
+        }
+        
+        return(uniforest(x = x, title = title, ...))
+    }
+    
+    ## Check if this is a multifit result
+    if (is_multifit_result(x)) {
+        ## Generate appropriate title if not provided
+        if (is.null(title)) {
+            model_type <- attr(x, "model_type")
+            title <- switch(model_type,
+                            "glm" = "Multivariate Logistic Regression",
+                            "coxph" = "Multivariate Survival Analysis",
+                            "lm" = "Multivariate Linear Regression",
+                            "glmer" = "Multivariate Mixed-Effects Logistic Regression",
+                            "lmer" = "Multivariate Mixed-Effects Linear Regression",
+                            "coxme" = "Multivariate Mixed-Effects Survival Analysis",
+                            "Multivariate Analysis"
+                            )
+        }
+        
+        return(multiforest(x = x, title = title, ...))
+    }
+    
+    ## Otherwise, treat as a model object
+    model <- x
+    model_class <- class(model)[1]
+    
+    ## Check for mixed-effects model classes
+    is_glmer <- inherits(model, c("glmerMod", "glmerMod"))
+    is_lmer <- inherits(model, "lmerMod") && !is_glmer
+    is_coxme <- inherits(model, "coxme")
+    
+    ## Generate appropriate title if not provided
+    if (is.null(title)) {
+        if (is_glmer) {
+            ## Check family for glmer
+            family_name <- model@resp$family$family
+            if (family_name == "binomial") {
+                title <- "Mixed-Effects Logistic Regression"
+            } else if (family_name == "poisson") {
+                title <- "Mixed-Effects Poisson Regression"
+            } else {
+                title <- "Mixed-Effects Generalized Linear Model"
+            }
+        } else if (is_lmer) {
+            title <- "Mixed-Effects Linear Regression"
+        } else if (is_coxme) {
+            title <- "Mixed-Effects Cox Proportional Hazards"
+        } else {
+            title <- switch(model_class,
+                            "coxph" = "Cox Proportional Hazards Model",
+                            "clogit" = "Conditional Logistic Regression",
+                            "glm" = {
+                                if (model$family$family == "binomial") {
+                                    "Logistic Regression Model"
+                                } else if (model$family$family == "poisson") {
+                                    "Poisson Regression Model" 
+                                } else {
+                                    "Generalized Linear Model"
+                                }
+                            },
+                            "lm" = "Linear Regression Model",
+                            "Model Results"  # Generic fallback
+                            )
+        }
+    }
+    
+    ## Route to appropriate function
+    ## Mixed-effects models first
+    if (is_glmer) {
+        glmforest(x = model, data = data, title = title, ...)
+        
+    } else if (is_lmer) {
+        lmforest(x = model, data = data, title = title, ...)
+        
+    } else if (is_coxme) {
+        coxforest(x = model, data = data, title = title, ...)
+        
+    } else if (model_class %in% c("coxph", "clogit")) {
+        coxforest(x = model, data = data, title = title, ...)
+        
+    } else if (model_class == "glm") {
+        glmforest(x = model, data = data, title = title, ...)
+        
+    } else if (model_class == "lm") {
+        ## Ensure not actually a GLM
+        if (inherits(model, "glm")) {
+            glmforest(x = model, data = data, title = title, ...)
+        } else {
+            lmforest(x = model, data = data, title = title, ...)
+        }
+        
+    } else {
+        ## Check if it might be a supported class with different name
+        if (inherits(model, "coxph")) {
+            coxforest(x = model, data = data, title = title, ...)
+        } else if (inherits(model, "glm")) {
+            glmforest(x = model, data = data, title = title, ...)
+        } else if (inherits(model, "lm")) {
+            lmforest(x = model, data = data, title = title, ...)
+        } else {
+            stop(paste("Input class", model_class, 
+                       "is not supported. Supported classes are:",
+                       "lm, glm, coxph, clogit, glmerMod, lmerMod, coxme,",
+                       "fit_result, fullfit_result, uniscreen_result, multifit_result"))
+        }
+    }
+}
+
+
+#' Check if object is a multifit result
+#' 
+#' Internal helper to detect multifit output objects.
+#' 
+#' @param x Object to check.
+#' @return Logical indicating if x is a multifit result.
+#' @keywords internal
+is_multifit_result <- function(x) {
+    ## Check for data.table with multifit-specific attributes
+    if (!data.table::is.data.table(x)) {
+        return(FALSE)
+    }
+    
+    ## Check for required multifit attributes
+    required_attrs <- c("predictor", "outcomes", "model_type", "raw_data")
+    has_attrs <- vapply(required_attrs, function(a) !is.null(attr(x, a)), logical(1))
+    
+    all(has_attrs)
+}
+
+
+#' Check if object is a uniscreen result
+#' 
+#' Internal helper to detect uniscreen output objects.
+#' 
+#' @param x Object to check.
+#' @return Logical indicating if x is a uniscreen result.
+#' @keywords internal
+is_uniscreen_result <- function(x) {
+    ## Check for uniscreen_result class
+    if ("uniscreen_result" %in% class(x)) {
+        return(TRUE)
+    }
+    
+    ## Also check for data.table with uniscreen-specific attributes
+    if (!data.table::is.data.table(x)) {
+        return(FALSE)
+    }
+    
+    ## Check for required uniscreen attributes
+    required_attrs <- c("outcome", "predictors", "model_type", "model_scope")
+    has_attrs <- vapply(required_attrs, function(a) !is.null(attr(x, a)), logical(1))
+    
+    ## Also verify model_scope is "Univariable"
+    if (all(has_attrs)) {
+        return(attr(x, "model_scope") == "Univariable")
+    }
+    
+    FALSE
+}

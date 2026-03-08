@@ -1,0 +1,669 @@
+---
+title: "Advanced Workflows"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Advanced Workflows}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+## Use ragg for better font rendering if available
+if (requireNamespace("ragg", quietly = TRUE)) {
+  old_opts <- options(summata.use_ragg = TRUE, width = 180)
+  knitr::opts_chunk$set(
+    dev = "ragg_png",
+    fig.retina = 1,
+    collapse = TRUE,
+    comment = "##>",
+    message = FALSE,
+    warning = FALSE,
+    fig.width = 8,
+    fig.height = 5,
+    out.width = "100%"
+  )
+} else {
+  old_opts <- options(width = 180)
+  knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "##>",
+    message = FALSE,
+    warning = FALSE,
+    fig.width = 8,
+    fig.height = 5,
+    out.width = "100%"
+  )
+}
+
+## Dynamic figure sizing: queue_plot() stashes rec_dims from a plot object,
+## and the opts_hook on the NEXT chunk (with use_rec_dims = TRUE) applies them
+## before knitr opens the graphics device. Plots render via ragg (dev = "ragg_png"
+## set above) and knitr captures them natively. No files written to disk.
+.plot_dims <- new.env(parent = emptyenv())
+.plot_dims$width <- NULL
+.plot_dims$height <- NULL
+
+knitr::opts_hooks$set(use_rec_dims = function(options) {
+  if (isTRUE(options$use_rec_dims)) {
+    if (!is.null(.plot_dims$width))  options$fig.width  <- .plot_dims$width
+    if (!is.null(.plot_dims$height)) options$fig.height <- .plot_dims$height
+    .plot_dims$width <- NULL
+    .plot_dims$height <- NULL
+  }
+  options
+})
+
+## Call at the end of a plot-creation chunk to stash dimensions for the next chunk.
+queue_plot <- function(plot) {
+  dims <- attr(plot, "rec_dims")
+  if (!is.null(dims)) {
+    .plot_dims$width  <- dims$width
+    .plot_dims$height <- dims$height
+  }
+  invisible(plot)
+}
+```
+
+Standard regression analysis assumes independent observations and constant effects across subgroups. In practice, these assumptions often fail: observations may be clustered (e.g., subjects within study sites), effects may vary by subgroup (interaction), or the baseline hazard may differ across strata. This vignette demonstrates advanced analytical techniques to address these complexities.
+
+---
+
+# Preliminaries
+
+The examples in this vignette use the `clintrial` dataset included with `summata`:
+
+```{r setup}
+library(summata)
+library(survival)
+library(ggplot2)
+
+data(clintrial)
+data(clintrial_labels)
+
+# Examine the clustering structure
+table(clintrial$site)
+```
+
+The `clintrial` dataset includes 10 study sites, providing a natural clustering variable for hierarchical analysis.
+
+> *n.b.:* To ensure correct font rendering and figure sizing, the forest plots below are displayed using a helper function (`queue_plot()`) that applies each plot's recommended dimensions (stored in the `"rec_dims"` attribute) via the [`ragg`](https://ragg.r-lib.org/) graphics device. In practice, replace `queue_plot()` with `ggplot2::ggsave()` using recommended plot dimensions for equivalent results:
+> 
+> ```{r, eval = FALSE}
+> p <- glmforest(model, data = mydata)
+> dims <- attr(p, "rec_dims")
+> ggplot2::ggsave("forest_plot.png", p,
+>                 width = dims$width, 
+>                 height = dims$height)
+> ```
+> 
+> This ensures that the figure size is always large enough to accommodate the constituent plot text and graphics, and it is generally the preferred method for saving forest plot outputs in `summata`.
+
+---
+
+# Interaction Effects
+
+Interaction analysis tests whether the association between a predictor and outcome varies across levels of another variable. Interactions are specified using colon notation in the `interactions` parameter; main effects are automatically included alongside the interaction term.
+
+## **Example 1:** Two-Way Interaction
+
+Specify interactions using colon notation in the `interactions` parameter:
+
+```{r}
+example1 <- fit(
+  data = clintrial,
+  outcome = "surgery",
+  predictors = c("age", "sex", "treatment", "stage"),
+  interactions = c("sex:treatment"),
+  model_type = "glm",
+  labels = clintrial_labels
+)
+
+example1
+```
+
+## **Example 2:** Multiple Interactions
+
+Test multiple effect modifiers simultaneously:
+
+```{r}
+example2 <- fit(
+  data = clintrial,
+  outcome = "Surv(os_months, os_status)",
+  predictors = c("age", "sex", "treatment", "stage"),
+  interactions = c("sex:treatment", "stage:treatment"),
+  model_type = "coxph",
+  labels = clintrial_labels
+)
+
+example2
+```
+
+## **Example 3:** Continuous × Categorical Interaction
+
+Test whether effects of a continuous variable vary by group:
+
+```{r}
+example3 <- fit(
+  data = clintrial,
+  outcome = "los_days",
+  predictors = c("age", "sex", "treatment", "stage", "surgery"),
+  interactions = c("age:treatment"),
+  model_type = "lm",
+  labels = clintrial_labels
+)
+
+example3
+```
+
+## **Example 4:** Interaction in fullfit()
+
+Include interaction terms in combined univariable/multivariable analysis:
+
+```{r}
+example4 <- fullfit(
+  data = clintrial,
+  outcome = "surgery",
+  predictors = c("age", "sex", "treatment", "stage", "sex:treatment"),
+  model_type = "glm",
+  method = "all",
+  labels = clintrial_labels
+)
+
+example4
+```
+
+## **Example 5:** Testing Interaction Significance
+
+Use `compfit()` to formally evaluate whether interactions improve model fit (*see* [Model Comparison](model_comparison.html)):
+
+```{r}
+example5 <- compfit(
+  data = clintrial,
+  outcome = "surgery",
+  model_list = list(
+    "Main Effects" = c("age", "sex", "treatment", "stage"),
+    "Sex × Treatment" = c("age", "sex", "treatment", "stage"),
+    "Stage × Treatment" = c("age", "sex", "treatment", "stage"),
+    "Both Interactions" = c("age", "sex", "treatment", "stage")
+  ),
+  interactions_list = list(
+    NULL,
+    c("sex:treatment"),
+    c("stage:treatment"),
+    c("sex:treatment", "stage:treatment")
+  ),
+  model_type = "glm",
+  labels = clintrial_labels
+)
+
+example5
+```
+
+## **Example 6:** Forest Plot with Interactions
+
+Visualize models including interaction terms:
+
+```{r}
+interaction_model <- fit(
+  data = clintrial,
+  outcome = "surgery",
+  predictors = c("age", "sex", "treatment", "stage"),
+  interactions = c("sex:treatment"),
+  model_type = "glm",
+  labels = clintrial_labels
+)
+
+example6 <- glmforest(
+  x = attr(interaction_model, "model"),
+  title = "Logistic Regression with Interaction",
+  labels = clintrial_labels,
+  indent_groups = TRUE,
+  zebra_stripes = TRUE
+)
+queue_plot(example6)
+```
+
+```{r, echo = FALSE, out.width = "100%", use_rec_dims = TRUE}
+print(example6)
+```
+
+---
+
+# Mixed-Effects Models
+
+Mixed-effects models (multilevel or hierarchical models) account for correlation within clusters by incorporating random effects. The `summata` package supports linear mixed models (`lmer`), generalized linear mixed models (`glmer`), and Cox mixed models (`coxme`).
+
+Random effects are specified using pipe notation within either the `predictors` parameter or in a separate `random` parameter:
+
+| Syntax | Meaning |
+|:-------|:--------|
+| `(1\|group)` | Random intercepts by group |
+| `(x\|group)` | Random intercepts and slopes for *x* |
+| `(1\|g1) + (1\|g2)` | Crossed random effects |
+
+## **Example 7:** Random Intercepts (Linear Mixed)
+
+The `(1|site)` syntax specifies a random intercept for each site:
+
+```{r}
+example7 <- fit(
+  data = clintrial,
+  outcome = "los_days",
+  predictors = c("age", "sex", "treatment", "stage", "(1|site)"),
+  model_type = "lmer",
+  labels = clintrial_labels
+)
+
+example7
+```
+
+## **Example 8:** Random Intercepts (Logistic Mixed)
+
+For binary outcomes with clustering (note the use of an independent `random` parameter):
+
+```{r}
+example8 <- fit(
+    data = clintrial,
+    outcome = "surgery",
+    predictors = c("age", "sex", "treatment", "stage"),
+    random = "(1|site)",
+    model_type = "glmer",
+    labels = clintrial_labels
+)
+
+example8
+```
+
+## **Example 9:** Random Slopes
+
+Allow effects to vary by cluster:
+
+```{r}
+example9 <- fit(
+  data = clintrial,
+  outcome = "los_days",
+  predictors = c("age", "sex", "treatment", "stage", "(1 + treatment|site)"),
+  model_type = "lmer",
+  labels = clintrial_labels
+)
+
+example9
+```
+
+## **Example 10:** Cox Mixed-Effects Model
+
+For survival outcomes with clustering:
+
+```{r}
+example10 <- fit(
+  data = clintrial,
+  outcome = "Surv(os_months, os_status)",
+  predictors = c("age", "sex", "treatment", "stage", "(1|site)"),
+  model_type = "coxme",
+  labels = clintrial_labels
+)
+
+example10
+```
+
+## **Example 11:** Forest Plot from Mixed Model
+
+Visualize fixed effects from mixed-effects models:
+
+```{r}
+example11 <- glmforest(
+  x = attr(example8, "model"),
+  title = "Logistic Mixed Model (Fixed Effects)",
+  labels = clintrial_labels,
+  indent_groups = TRUE,
+  zebra_stripes = TRUE
+)
+queue_plot(example11)
+```
+
+```{r, echo = FALSE, out.width = "100%", use_rec_dims = TRUE}
+print(example11)
+```
+
+## **Example 12:** Comparing Random-Effects Specifications
+
+Use `compfit()` to compare different random-effects structures (*see* [Model Comparison](model_comparison.html)):
+
+```{r}
+example12 <- compfit(
+  data = clintrial,
+  outcome = "los_days",
+  model_list = list(
+    "Random Intercepts" = c("age", "sex", "treatment", "stage", "(1|site)"),
+    "Random Slopes" = c("age", "sex", "treatment", "stage", "(1 + treatment|site)")
+  ),
+  model_type = "lmer",
+  labels = clintrial_labels
+)
+
+example12
+```
+
+---
+
+# Stratification and Clustering
+
+In addition to mixed-effects models, Cox models support stratification (separate baseline hazards) and clustered standard errors (robust variance estimation).
+
+| Approach | When to Use |
+|:---------|:------------|
+| Mixed-effects | Model cluster-specific effects; prediction at cluster level |
+| Stratification | Proportional hazards assumption violated for a variable |
+| Clustered SE | Correlation within clusters; robust inference |
+
+## **Example 13:** Stratified Cox Model
+
+Stratification allows nonproportional hazards across strata without estimating stratum effects. Use the `strata` parameter:
+
+```{r}
+example13 <- fit(
+  data = clintrial,
+  outcome = "Surv(os_months, os_status)",
+  predictors = c("age", "sex", "treatment"),
+  strata = "site",
+  model_type = "coxph",
+  labels = clintrial_labels
+)
+
+example13
+```
+
+## **Example 14:** Cluster-Robust SEs
+
+For robust inference with correlated observations, cluster-robust standard errors account for within-cluster correlation. Use the `cluster` parameter:
+
+```{r}
+example14 <- fit(
+  data = clintrial,
+  outcome = "Surv(os_months, os_status)",
+  predictors = c("age", "sex", "treatment", "stage"),
+  cluster = "site",
+  model_type = "coxph",
+  labels = clintrial_labels
+)
+
+example14
+```
+
+---
+
+# Weighted Regression
+
+For survey data or inverse probability weighting, use the `weights` parameter. Weights can account for sampling design, non-response, or confounding adjustment.
+
+## **Example 15:** Weighted Analysis
+
+```{r}
+# Create example weights
+clintrial$analysis_weight <- runif(nrow(clintrial), 0.5, 2.0)
+
+example15 <- fit(
+  data = clintrial,
+  outcome = "surgery",
+  predictors = c("age", "sex", "treatment", "stage"),
+  weights = "analysis_weight",
+  model_type = "glm",
+  labels = clintrial_labels
+)
+
+example15
+```
+
+---
+
+# Advanced Univariable Screening Features
+
+The `uniscreen()` function supports advanced model specifications including random effects and stratification.
+
+## **Example 16:** Univariable Screening with Random Effects
+
+Screen multiple predictors while accounting for clustering:
+
+```{r}
+example16 <- uniscreen(
+  data = clintrial,
+  outcome = "surgery",
+  predictors = c("age", "sex", "treatment", "stage"),
+  model_type = "glmer",
+  random = "(1|site)",
+  labels = clintrial_labels
+)
+
+example16
+```
+
+## **Example 17:** Cox Screening with Mixed Effects
+
+For survival outcomes with clustering:
+
+```{r}
+example17 <- uniscreen(
+  data = clintrial,
+  outcome = "Surv(os_months, os_status)",
+  predictors = c("age", "sex", "treatment", "stage", "ecog"),
+  model_type = "coxme",
+  random = "(1|site)",
+  labels = clintrial_labels
+)
+
+example17
+```
+
+## **Example 18:** Forest Plot from Univariable Screening
+
+The `uniforest()` function visualizes univariable screening results:
+
+```{r}
+uni_results <- uniscreen(
+  data = clintrial,
+  outcome = "Surv(os_months, os_status)",
+  predictors = c("age", "sex", "treatment", "stage", "ecog", "grade"),
+  model_type = "coxph",
+  labels = clintrial_labels
+)
+
+example18 <- uniforest(
+  uni_results,
+  title = "Univariable Screening Results",
+  indent_groups = TRUE,
+  zebra_stripes = TRUE
+)
+queue_plot(example18)
+```
+
+```{r, echo = FALSE, out.width = "100%", use_rec_dims = TRUE}
+print(example18)
+```
+
+---
+
+# Advanced Multivariate Regression Features
+
+The `multifit()` function supports interactions and mixed-effects models when testing a predictor across multiple outcomes.
+
+## **Example 19:** Multi-Outcome with Interactions
+
+Test effect modification across multiple outcomes:
+
+```{r}
+example19 <- multifit(
+  data = clintrial,
+  outcomes = c("surgery", "pfs_status", "os_status"),
+  predictor = "treatment",
+  covariates = c("age", "sex", "stage"),
+  interactions = c("treatment:sex"),
+  labels = clintrial_labels,
+  parallel = FALSE
+)
+
+example19
+```
+
+## **Example 20:** Multi-Outcome with Mixed Effects
+
+Account for clustering when testing effects across outcomes:
+
+```{r}
+example20 <- multifit(
+  data = clintrial,
+  outcomes = c("surgery", "pfs_status"),
+  predictor = "treatment",
+  covariates = c("age", "sex"),
+  random = "(1|site)",
+  model_type = "glmer",
+  labels = clintrial_labels,
+  parallel = FALSE
+)
+
+example20
+```
+
+## **Example 21:** Survival Multi-Outcome with Mixed Effects
+
+For multiple survival outcomes with clustering:
+
+```{r}
+example21 <- multifit(
+  data = clintrial,
+  outcomes = c("Surv(pfs_months, pfs_status)",
+               "Surv(os_months, os_status)"),
+  predictor = "treatment",
+  covariates = c("age", "sex"),
+  random = "(1|site)",
+  model_type = "coxme",
+  labels = clintrial_labels,
+  parallel = FALSE
+)
+
+example21
+```
+
+---
+
+# Complete Workflow Example
+
+The following demonstrates a complete advanced analysis workflow:
+
+```{r, fig.width = 12, fig.height = 8}
+# Step 1: Screen risk factors for primary outcome
+risk_screening <- uniscreen(
+  data = clintrial,
+  outcome = "os_status",
+  predictors = c("age", "sex", "bmi", "smoking", "diabetes",
+                 "hypertension", "stage", "ecog", "treatment"),
+  model_type = "glm",
+  p_threshold = 0.20,
+  labels = clintrial_labels
+)
+
+risk_screening
+
+# Step 2: Test key exposure across multiple outcomes
+effects <- multifit(
+  data = clintrial,
+  outcomes = c("surgery", "pfs_status", "os_status"),
+  predictor = "treatment",
+  covariates = c("age", "sex", "stage"),
+  columns = "both",
+  labels = clintrial_labels,
+  parallel = FALSE
+)
+
+effects
+
+# Step 3: Visualize effects
+forest_plot <- multiforest(
+  effects,
+  title = "Effects Across Outcomes",
+  indent_predictor = TRUE,
+  zebra_stripes = TRUE
+)
+queue_plot(forest_plot)
+```
+
+```{r, echo = FALSE, out.width = "100%", use_rec_dims = TRUE}
+print(forest_plot)
+```
+
+---
+
+# Best Practices
+
+## Interaction Analysis
+
+1. Include main effects for all variables in interactions
+2. Test formally using interaction *p*-values
+3. Non-significant interactions do not prove effect homogeneity
+4. Consider domain plausibility when interpreting
+
+## Mixed-Effects Models
+
+1. Use when data exhibits natural clustering
+2. Start with random intercepts; add random slopes if justified
+3. Monitor convergence; simplify if necessary
+4. Compare to fixed-effects models using `compfit()`
+
+## Method Selection
+
+| Scenario | Recommended Approach |
+|:---------|:---------------------|
+| Clustered observations | Mixed-effects models |
+| Robust inference needed | Clustered standard errors |
+| PH assumption violated | Stratification |
+| Effect modification | Interaction terms |
+| Survey data | Weighted regression |
+
+## Sample Size Considerations
+
+- **Interactions**: Require larger samples than main effects models
+- **Mixed models**: Need sufficient clusters (≥ 20-30 recommended)
+- **Stratification**: Each stratum needs adequate events
+
+---
+
+# Common Issues
+
+## Convergence Problems in Mixed Models
+
+Simplify the random effects structure if convergence fails:
+
+```{r, eval = FALSE}
+# Start with random intercepts only
+fit(data, outcome, c(predictors, "(1|site)"), model_type = "lmer")
+```
+
+Check for common problems such as few observations per cluster, near-zero variance in random effects, or highly correlated predictors.
+
+## Interpreting Interactions
+
+For categorical × categorical interactions, the coefficient represents the additional effect beyond the sum of main effects:
+
+```{r, eval = FALSE}
+# Access model for detailed interpretation
+model <- attr(result, "model")
+summary(model)
+```
+
+## Forest Plots with Interactions
+
+Forest plots display all terms including interactions. For complex interaction patterns, consider stratified analyses or effect plots.
+
+```{r, include = FALSE}
+options(old_opts)
+```
+
+---
+
+# Further Reading
+
+- [Descriptive Tables](descriptive_tables.html): `desctable()` for baseline characteristics
+- [Regression Modeling](regression_modeling.html): `fit()`, `uniscreen()`, and `fullfit()`
+- [Model Comparison](model_comparison.html): `compfit()` for comparing models
+- [Table Export](table_export.html): Export to PDF, Word, and other formats
+- [Forest Plots](forest_plots.html): Visualization of regression results
+- [Multivariate Regression](multivariate_regression.html): `multifit()` for multi-outcome analysis
