@@ -1,7 +1,7 @@
 Package: summata
 Type: Package
 Title: Publication-Ready Summary Tables and Forest Plots
-Version: 0.11.3
+Version: 0.11.4
 Authors@R: c(
     person(
         given = c("Paul", "Hsin-ti"), 
@@ -31,9 +31,9 @@ Suggests: MASS, coxme, flextable, knitr, lme4, MuMIn, officer, pROC,
         tinytex, withr, xtable
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2026-03-04 01:18:49 UTC; paul
+Packaged: 2026-03-20 17:38:02 UTC; paul
 Author: Paul Hsin-ti McClelland [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-3119-6531>)
 Maintainer: Paul Hsin-ti McClelland <PaulHMcClelland@protonmail.com>
 Repository: CRAN
-Date/Publication: 2026-03-08 10:20:02 UTC
+Date/Publication: 2026-03-20 18:00:02 UTC

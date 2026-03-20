@@ -159,7 +159,30 @@ example11 <- fit(
 example11
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example12 <- fit(
+# Default CIs (profile likelihood for GLM, slower but more accurate)
+example12a <- fit(
+  data = clintrial,
+  outcome = "readmission_30d",
+  predictors = c("age", "sex", "stage"),
+  model_type = "glm",
+  conf_method = "profile"
+)
+
+example12a
+
+# Wald CIs (faster, suitable for simulation studies or exploratory work)
+example12b <- fit(
+  data = clintrial,
+  outcome = "readmission_30d",
+  predictors = c("age", "sex", "stage"),
+  model_type = "glm",
+  conf_method = "wald"
+)
+
+example12b
+
+## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+example13 <- fit(
   data = clintrial,
   outcome = "readmission_30d",
   predictors = c("age", "sex", "stage"),
@@ -167,13 +190,13 @@ example12 <- fit(
   exponentiate = FALSE
 )
 
-example12
+example13
 
 ## ----eval = FALSE-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 # fullfit(data, outcome, predictors, model_type, method, ...)
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example13 <- fullfit(
+example14 <- fullfit(
   data = clintrial,
   outcome = "readmission_30d",
   predictors = c("age", "sex", "bmi", "smoking", "diabetes",
@@ -184,10 +207,10 @@ example13 <- fullfit(
   labels = clintrial_labels
 )
 
-example13
+example14
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example14 <- fullfit(
+example15 <- fullfit(
   data = clintrial,
   outcome = "any_complication",
   predictors = c("age", "sex", "treatment", "stage"),
@@ -196,10 +219,10 @@ example14 <- fullfit(
   labels = clintrial_labels
 )
 
-example14
+example15
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example15 <- fullfit(
+example16 <- fullfit(
   data = clintrial,
   outcome = "icu_admission",
   predictors = c("age", "sex", "bmi", "smoking", "stage", "treatment"),
@@ -209,11 +232,11 @@ example15 <- fullfit(
   labels = clintrial_labels
 )
 
-example15
+example16
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Univariable only
-example16a <- fullfit(
+example17a <- fullfit(
   data = clintrial,
   outcome = "wound_infection",
   predictors = c("age", "sex", "stage"),
@@ -221,10 +244,10 @@ example16a <- fullfit(
   columns = "uni"
 )
 
-example16a
+example17a
 
 # Multivariable only
-example16b <- fullfit(
+example17b <- fullfit(
   data = clintrial,
   outcome = "wound_infection",
   predictors = c("age", "sex", "stage"),
@@ -232,10 +255,10 @@ example16b <- fullfit(
   columns = "multi"
 )
 
-example16b
+example17b
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example17 <- fullfit(
+example18 <- fullfit(
   data = clintrial,
   outcome = "Surv(os_months, os_status)",
   predictors = c("age", "sex", "treatment", "stage", "ecog"),
@@ -245,10 +268,10 @@ example17 <- fullfit(
   labels = clintrial_labels
 )
 
-example17
+example18
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example18 <- fit(
+example19 <- fit(
   data = clintrial,
   outcome = "ae_count",
   predictors = c("age", "sex", "diabetes", "treatment"),
@@ -256,26 +279,16 @@ example18 <- fit(
   labels = clintrial_labels
 )
 
-example18
+example19
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example19 <- fit(
+# String shorthand: resolves to Gamma(link = "log")
+example20 <- fit(
   data = clintrial,
   outcome = "los_days",
   predictors = c("age", "ecog", "stage", "treatment"),
   model_type = "glm",
-  family = Gamma(link = "log"),
-  labels = clintrial_labels
-)
-
-example19
-
-## ----eval = requireNamespace("lme4", quietly = TRUE)------------------------------------------------------------------------------------------------------------------------------
-example20 <- fit(
-  data = clintrial,
-  outcome = "los_days",
-  predictors = c("age", "sex", "treatment", "stage", "(1|site)"),
-  model_type = "lmer",
+  family = "Gamma",
   labels = clintrial_labels
 )
 
@@ -284,10 +297,9 @@ example20
 ## ----eval = requireNamespace("lme4", quietly = TRUE)------------------------------------------------------------------------------------------------------------------------------
 example21 <- fit(
   data = clintrial,
-  outcome = "readmission_30d",
-  predictors = c("age", "sex", "diabetes", "treatment", "(1|site)"),
-  model_type = "glmer",
-  family = "binomial",
+  outcome = "los_days",
+  predictors = c("age", "sex", "treatment", "stage", "(1|site)"),
+  model_type = "lmer",
   labels = clintrial_labels
 )
 
@@ -296,6 +308,18 @@ example21
 ## ----eval = requireNamespace("lme4", quietly = TRUE)------------------------------------------------------------------------------------------------------------------------------
 example22 <- fit(
   data = clintrial,
+  outcome = "readmission_30d",
+  predictors = c("age", "sex", "diabetes", "treatment", "(1|site)"),
+  model_type = "glmer",
+  family = "binomial",
+  labels = clintrial_labels
+)
+
+example22
+
+## ----eval = requireNamespace("lme4", quietly = TRUE)------------------------------------------------------------------------------------------------------------------------------
+example23 <- fit(
+  data = clintrial,
   outcome = "fu_count",
   predictors = c("age", "stage", "treatment", "(1|site)"),
   model_type = "glmer",
@@ -303,10 +327,10 @@ example22 <- fit(
   labels = clintrial_labels
 )
 
-example22
+example23
 
 ## ----eval = requireNamespace("coxme", quietly = TRUE)-----------------------------------------------------------------------------------------------------------------------------
-example23 <- fit(
+example24 <- fit(
   data = clintrial,
   outcome = "Surv(os_months, os_status)",
   predictors = c("age", "sex", "treatment", "stage", "(1|site)"),
@@ -314,10 +338,10 @@ example23 <- fit(
   labels = clintrial_labels
 )
 
-example23
+example24
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-example24 <- fit(
+example25 <- fit(
   data = clintrial,
   outcome = "any_complication",
   predictors = c("age", "sex", "diabetes", "stage"),
@@ -326,7 +350,7 @@ example24 <- fit(
   labels = clintrial_labels
 )
 
-example24
+example25
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Matched case-control dataset (100 pairs)
@@ -345,7 +369,7 @@ matched_data <- do.call(rbind, lapply(1:n_pairs, function(i) {
   )
 }))
 
-example25 <- fit(
+example26 <- fit(
   data = matched_data,
   outcome = "case",
   predictors = c("smoking", "diabetes", "bmi"),
@@ -353,7 +377,7 @@ example25 <- fit(
   strata = "match_id"
 )
 
-example25
+example26
 
 ## ----eval = FALSE-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 # # Microsoft Word
