@@ -371,17 +371,20 @@ Codeberg:</p>
 <h1>Dependencies</h1>
 <div id="required-dependencies" class="section level2">
 <h2>Required Dependencies</h2>
-<p>The following packages are installed automatically as
-dependencies:</p>
+<p>The following packages are required. Those distributed through CRAN
+are installed automatically with <code>summata</code>; others are
+included in base R.</p>
 <table>
 <colgroup>
-<col width="50%" />
-<col width="50%" />
+<col width="34%" />
+<col width="34%" />
+<col width="30%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">Package</th>
 <th align="left">Purpose</th>
+<th align="left">Source</th>
 </tr>
 </thead>
 <tbody>
@@ -389,22 +392,27 @@ dependencies:</p>
 <td align="left"><code>data.table</code></td>
 <td align="left">High-performance data manipulation and core data
 operations</td>
+<td align="left">CRAN</td>
 </tr>
 <tr class="even">
-<td align="left"><code>survival</code></td>
-<td align="left">Survival and time-to-event analysis</td>
-</tr>
-<tr class="odd">
 <td align="left"><code>ggplot2</code></td>
 <td align="left">Visualization system for forest plots and graphics</td>
+<td align="left">CRAN</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>survival</code></td>
+<td align="left">Survival and time-to-event analysis</td>
+<td align="left">Base R</td>
 </tr>
 <tr class="even">
 <td align="left"><code>stats</code></td>
 <td align="left">Statistical functions and model fitting</td>
+<td align="left">Base R</td>
 </tr>
 <tr class="odd">
 <td align="left"><code>grDevices</code></td>
 <td align="left">Graphics devices and color palettes</td>
+<td align="left">Base R</td>
 </tr>
 </tbody>
 </table>
@@ -642,15 +650,15 @@ edited in Microsoft Office or compatible applications.</p>
 <span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>)</span>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co"># Test Word export (requires flextable, officer)</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">table2docx</span>(test_data, <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;verification_test.docx&quot;</span>))</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="fu">table2docx</span>(test_data, <span class="at">file =</span> <span class="st">&quot;verification_test.docx&quot;</span>)</span>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a></span>
 <span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co"># Test PDF export (requires xtable, LaTeX)</span></span>
-<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="fu">table2pdf</span>(test_data, <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;verification_test.pdf&quot;</span>))</span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="fu">table2pdf</span>(test_data, <span class="at">file =</span> <span class="st">&quot;verification_test.pdf&quot;</span>)</span>
 <span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a></span>
 <span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co"># Clean up</span></span>
 <span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="fu">file.remove</span>(</span>
-<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;verification_test.docx&quot;</span>),</span>
-<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;verification_test.pdf&quot;</span>)</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>  <span class="st">&quot;verification_test.docx&quot;</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a>  <span class="st">&quot;verification_test.pdf&quot;</span></span>
 <span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a>)</span></code></pre></div>
 <p>Successful execution confirms proper configuration of all
 export-related dependencies.</p>
@@ -675,7 +683,7 @@ Solutions include:</p>
 <p>For TinyTeX, install missing packages directly:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>tinytex<span class="sc">::</span><span class="fu">tlmgr_install</span>(<span class="st">&quot;package_name&quot;</span>)</span></code></pre></div>
 <p>For compilation errors, examine the log file:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">table2pdf</span>(test_data, <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;debug.pdf&quot;</span>), <span class="at">show_logs =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">table2pdf</span>(test_data, <span class="at">file =</span> <span class="st">&quot;debug.pdf&quot;</span>, <span class="at">show_logs =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 </div>
 <div id="package-installation-failures" class="section level2">
 <h2>Package Installation Failures</h2>

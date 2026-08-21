@@ -357,53 +357,52 @@ formats and format-specific options where needed.</p>
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left"><code>tablesave()</code></td>
+<td align="left">Any of the below, based on file extension</td>
+<td align="left">Varies</td>
+</tr>
+<tr class="even">
 <td align="left"><code>data.table::fwrite()</code></td>
 <td align="left">CSV / TSV</td>
 <td align="left"><code>data.table</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>table2pdf()</code></td>
 <td align="left">PDF</td>
 <td align="left"><code>xtable</code>, LaTeX distribution</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>table2docx()</code></td>
 <td align="left">Microsoft Word (.docx)</td>
 <td align="left"><code>flextable</code>, <code>officer</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>table2html()</code></td>
 <td align="left">HTML</td>
 <td align="left"><code>xtable</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>table2pptx()</code></td>
 <td align="left">PowerPoint (.pptx)</td>
 <td align="left"><code>flextable</code>, <code>officer</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>table2tex()</code></td>
 <td align="left">LaTeX source (.tex)</td>
 <td align="left"><code>xtable</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>table2rtf()</code></td>
 <td align="left">Rich Text Format (.rtf)</td>
 <td align="left"><code>flextable</code></td>
 </tr>
-<tr class="even">
-<td align="left"><code>autotable()</code></td>
-<td align="left">Auto-detect from extension</td>
-<td align="left">Varies</td>
-</tr>
 </tbody>
 </table>
-<p>For delimited text formats (CSV, TSV), tables can be written directly
-with <code>data.table::fwrite()</code> since all <code>summata</code>
-output tables are <code>data.table</code> objects. For formatted
-document output, these functions follow a standard syntax when
-called:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">autotable</span>(data, <span class="st">&quot;output.pdf&quot;</span>, ...)</span></code></pre></div>
+<p><code>tablesave()</code> writes any of these formats, choosing one
+from the file extension. The format-specific functions may also be
+called directly if preferred. The syntax for all functions follows the
+same paradigm:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">tablesave</span>(data, <span class="st">&quot;output.pdf&quot;</span>, ...)</span></code></pre></div>
 <p>where <code>data</code> is the dataset, and <code>&quot;output.pdf&quot;</code>
 is the name of the destination file. This vignette demonstrates the
 various capabilities of these functions using the included sample
@@ -456,26 +455,29 @@ dataset.</p>
 </div>
 <div id="csv-tsv-export" class="section level1">
 <h1>CSV / TSV Export</h1>
-<p>All <code>summata</code> output tables are <code>data.table</code>
-objects, so they can be written to delimited text files directly with
-<code>data.table::fwrite()</code>. This is the simplest export path and
-requires no additional dependencies beyond <code>data.table</code>,
-which <code>summata</code> already imports.</p>
+<p>Delimited text is the simplest export path and requires no
+dependencies beyond <code>data.table</code>, which <code>summata</code>
+already imports. Since all <code>summata</code> output tables are
+<code>data.table</code> objects, <code>data.table::fwrite()</code> may
+be used directly.</p>
 <div id="example-1-csv-export" class="section level2">
 <h2><strong>Example 1:</strong> CSV Export</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">fwrite</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.csv&quot;</span>))</span></code></pre></div>
+<p>Standard CSV export can be performed using
+<code>data.table::fwrite()</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">fwrite</span>(table1, <span class="st">&quot;table1.csv&quot;</span>)</span></code></pre></div>
 </div>
 <div id="example-2-tsv-export" class="section level2">
 <h2><strong>Example 2:</strong> TSV Export</h2>
-<p>Specify a tab delimiter for TSV output:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">fwrite</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.tsv&quot;</span>), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>)</span></code></pre></div>
+<p>TSV export can be performed by using
+<code>data.table::fwrite()</code> with a specified tab delimiter:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">fwrite</span>(table1, <span class="st">&quot;table1.tsv&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>)</span></code></pre></div>
 </div>
 <div id="example-3-semicolon-delimited-european-locale" class="section level2">
 <h2><strong>Example 3:</strong> Semicolon-Delimited (European
 Locale)</h2>
-<p>Use a semicolon delimiter for compatibility with locales where the
-comma is the decimal separator:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">fwrite</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.csv&quot;</span>), <span class="at">sep =</span> <span class="st">&quot;;&quot;</span>)</span></code></pre></div>
+<p>Like <code>data.table::fwrite()</code>, <code>tablesave()</code> also
+accepts a custom delimiter:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>data.table<span class="sc">::</span><span class="fu">fwrite</span>(table1, <span class="st">&quot;table1_semicolon.csv&quot;</span>, <span class="at">sep =</span> <span class="st">&quot;;&quot;</span>)</span></code></pre></div>
 <p>CSV and TSV files are useful for archiving raw table output,
 importing into spreadsheet software, or downstream processing in other
 statistical environments. For formatted, publication-ready output, use
@@ -493,7 +495,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 <p>The simplest usage requires only a table and filename:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pdf&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1.pdf&quot;</span></span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="example-5-with-caption" class="section level2">
@@ -501,7 +503,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 <p>Add a caption using the <code>caption</code> parameter:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pdf&quot;</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_caption.pdf&quot;</span>,</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics by Group&quot;</span></span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>)</span></code></pre></div>
 </div>
@@ -510,7 +512,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 <p>Multiple formatting options can be combined:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.pdf&quot;</span>),</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.pdf&quot;</span>,</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Analysis&quot;</span>,</span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">font_size =</span> <span class="dv">8</span>,</span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">bold_significant =</span> <span class="cn">TRUE</span>,</span>
@@ -525,7 +527,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 <p>Control page size and orientation:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2_Landscape.pdf&quot;</span>),</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2_landscape.pdf&quot;</span>,</span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Results&quot;</span>,</span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">paper =</span> <span class="st">&quot;letter&quot;</span>,</span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span></span>
@@ -536,7 +538,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 <p>Adjust page margins (in inches):</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2_Margins.pdf&quot;</span>),</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2_margins.pdf&quot;</span>,</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">margins =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>)  <span class="co"># top, right, bottom, left</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>)</span></code></pre></div>
 </div>
@@ -545,7 +547,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 <p>Scale tables to fit the page width:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2_Fitted.pdf&quot;</span>),</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2_fitted.pdf&quot;</span>,</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">fit_to_page =</span> <span class="cn">TRUE</span></span>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>)</span></code></pre></div>
 </div>
@@ -555,7 +557,7 @@ distribution (TinyTeX, TeX Live, MiKTeX, or MacTeX) is required.</p>
 documents:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2_Auto.pdf&quot;</span>),</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2_auto.pdf&quot;</span>,</span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">paper =</span> <span class="st">&quot;auto&quot;</span></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>)</span></code></pre></div>
 <hr />
@@ -571,7 +573,7 @@ packages.</p>
 <p>The simplest usage requires only a table and filename:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.docx&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1.docx&quot;</span></span>
 <span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="example-12-with-caption" class="section level2">
@@ -579,7 +581,7 @@ packages.</p>
 <p>Add a caption using the <code>caption</code> parameter:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.docx&quot;</span>),</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_caption.docx&quot;</span>,</span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics by Group&quot;</span></span>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>)</span></code></pre></div>
 </div>
@@ -588,7 +590,7 @@ packages.</p>
 <p>Multiple formatting options can be combined:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.docx&quot;</span>),</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.docx&quot;</span>,</span>
 <span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Analysis&quot;</span>,</span>
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">font_size =</span> <span class="dv">9</span>,</span>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">font_family =</span> <span class="st">&quot;Times New Roman&quot;</span>,</span>
@@ -603,7 +605,7 @@ packages.</p>
 <p>Control page size and orientation for wide tables:</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2_Landscape.docx&quot;</span>),</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2_landscape.docx&quot;</span>,</span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Results&quot;</span>,</span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">paper =</span> <span class="st">&quot;letter&quot;</span>,</span>
 <span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>  <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span></span>
@@ -614,7 +616,7 @@ packages.</p>
 <p>Use a dark header background for visual emphasis:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1_DarkHeader.docx&quot;</span>),</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_darkheader.docx&quot;</span>,</span>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics&quot;</span>,</span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">dark_header =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="at">zebra_stripes =</span> <span class="cn">TRUE</span></span>
@@ -631,7 +633,7 @@ output for web use via the <code>xtable</code> package.</p>
 <p>The simplest usage requires only a table and filename:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">table2html</span>(</span>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.html&quot;</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1.html&quot;</span></span>
 <span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="example-17-with-caption" class="section level2">
@@ -639,7 +641,7 @@ output for web use via the <code>xtable</code> package.</p>
 <p>Add a caption using the <code>caption</code> parameter:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">table2html</span>(</span>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.html&quot;</span>),</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_caption.html&quot;</span>,</span>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics&quot;</span></span>
 <span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>)</span></code></pre></div>
 </div>
@@ -648,7 +650,7 @@ output for web use via the <code>xtable</code> package.</p>
 <p>Multiple formatting options can be combined:</p>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">table2html</span>(</span>
 <span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.html&quot;</span>),</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.html&quot;</span>,</span>
 <span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Analysis&quot;</span>,</span>
 <span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="at">bold_significant =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  <span class="at">indent_groups =</span> <span class="cn">TRUE</span>,</span>
@@ -668,7 +670,7 @@ presentations with tables using the <code>flextable</code> and
 <p>The simplest usage creates a single-slide presentation:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">table2pptx</span>(</span>
 <span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pptx&quot;</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1.pptx&quot;</span></span>
 <span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="example-20-with-slide-title" class="section level2">
@@ -676,7 +678,7 @@ presentations with tables using the <code>flextable</code> and
 <p>Add a slide title using the <code>slide_title</code> parameter:</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">table2pptx</span>(</span>
 <span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pptx&quot;</span>),</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_slidetitle.pptx&quot;</span>,</span>
 <span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>  <span class="at">slide_title =</span> <span class="st">&quot;Baseline Characteristics&quot;</span></span>
 <span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>)</span></code></pre></div>
 </div>
@@ -685,7 +687,7 @@ presentations with tables using the <code>flextable</code> and
 <p>Multiple formatting options can be combined:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">table2pptx</span>(</span>
 <span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.pptx&quot;</span>),</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.pptx&quot;</span>,</span>
 <span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="at">slide_title =</span> <span class="st">&quot;Regression Analysis&quot;</span>,</span>
 <span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  <span class="at">font_size =</span> <span class="dv">10</span>,</span>
 <span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  <span class="at">font_family =</span> <span class="st">&quot;Arial&quot;</span>,</span>
@@ -699,7 +701,7 @@ presentations with tables using the <code>flextable</code> and
 <p>Use an existing PowerPoint template:</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">table2pptx</span>(</span>
 <span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1_Custom.pptx&quot;</span>),</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_custom.pptx&quot;</span>,</span>
 <span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>  <span class="at">template =</span> <span class="st">&quot;my_template.pptx&quot;</span>,</span>
 <span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>  <span class="at">layout =</span> <span class="st">&quot;Title and Content&quot;</span>,</span>
 <span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>  <span class="at">master =</span> <span class="st">&quot;Office Theme&quot;</span></span>
@@ -716,7 +718,7 @@ inclusion in manuscripts via the <code>xtable</code> package.</p>
 <p>The simplest usage requires only a table and filename:</p>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">table2tex</span>(</span>
 <span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.tex&quot;</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1.tex&quot;</span></span>
 <span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="example-24-with-caption-and-label" class="section level2">
@@ -724,7 +726,7 @@ inclusion in manuscripts via the <code>xtable</code> package.</p>
 <p>Add caption and cross-reference label:</p>
 <div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">table2tex</span>(</span>
 <span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.tex&quot;</span>),</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_caption.tex&quot;</span>,</span>
 <span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Baseline Characteristics by Group&quot;</span>,</span>
 <span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>  <span class="at">label =</span> <span class="st">&quot;tab:demographics&quot;</span></span>
 <span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>)</span></code></pre></div>
@@ -734,7 +736,7 @@ inclusion in manuscripts via the <code>xtable</code> package.</p>
 <p>Use the booktabs package for professional formatting:</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">table2tex</span>(</span>
 <span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.tex&quot;</span>),</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.tex&quot;</span>,</span>
 <span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Regression Analysis&quot;</span>,</span>
 <span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>  <span class="at">label =</span> <span class="st">&quot;tab:regression&quot;</span>,</span>
 <span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a>  <span class="at">booktabs =</span> <span class="cn">TRUE</span>,</span>
@@ -753,7 +755,7 @@ using the <code>flextable</code> and <code>officer</code> packages.</p>
 <p>The simplest usage requires only a table and filename:</p>
 <div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">table2rtf</span>(</span>
 <span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.rtf&quot;</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1.rtf&quot;</span></span>
 <span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="example-27-with-formatting-options" class="section level2">
@@ -761,7 +763,7 @@ using the <code>flextable</code> and <code>officer</code> packages.</p>
 <p>Multiple formatting options can be combined:</p>
 <div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">table2rtf</span>(</span>
 <span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.rtf&quot;</span>),</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.rtf&quot;</span>,</span>
 <span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Analysis&quot;</span>,</span>
 <span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>  <span class="at">font_size =</span> <span class="dv">9</span>,</span>
 <span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>  <span class="at">font_family =</span> <span class="st">&quot;Times New Roman&quot;</span>,</span>
@@ -775,30 +777,31 @@ using the <code>flextable</code> and <code>officer</code> packages.</p>
 <p>Control page size and orientation:</p>
 <div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">table2rtf</span>(</span>
 <span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2_Landscape.rtf&quot;</span>),</span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2_landscape.rtf&quot;</span>,</span>
 <span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a>  <span class="at">paper =</span> <span class="st">&quot;letter&quot;</span>,</span>
 <span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a>  <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span></span>
 <span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a>)</span></code></pre></div>
 <hr />
 </div>
 </div>
-<div id="automatic-format-detection" class="section level1">
-<h1>Automatic Format Detection</h1>
-<p>The <code>autotable()</code> function detects the output format from
-the file extension, simplifying the export workflow:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.csv&quot;</span>))   <span class="co"># CSV output</span></span>
-<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.tsv&quot;</span>))   <span class="co"># TSV output</span></span>
-<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pdf&quot;</span>))   <span class="co"># PDF output</span></span>
-<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.docx&quot;</span>))  <span class="co"># DOCX output</span></span>
-<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.html&quot;</span>))  <span class="co"># HTML output</span></span>
-<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pptx&quot;</span>))  <span class="co"># PPTX output</span></span>
-<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.tex&quot;</span>))   <span class="co"># TeX output</span></span>
-<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a><span class="fu">autotable</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.rtf&quot;</span>))   <span class="co"># RTF output</span></span></code></pre></div>
+<div id="saving-to-any-format" class="section level1">
+<h1>Saving to Any Format</h1>
+<p>The <code>tablesave()</code> function writes a table in the format
+indicated by the file extension, simplifying the export workflow:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.csv&quot;</span>)             <span class="co"># CSV output</span></span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.tsv&quot;</span>)             <span class="co"># TSV output</span></span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.ssv&quot;</span>, <span class="at">sep =</span> <span class="st">&quot; &quot;</span>)  <span class="co"># SSV output</span></span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.pdf&quot;</span>)             <span class="co"># PDF output</span></span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.docx&quot;</span>)            <span class="co"># DOCX output</span></span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.html&quot;</span>)            <span class="co"># HTML output</span></span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.pptx&quot;</span>)            <span class="co"># PPTX output</span></span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.tex&quot;</span>)             <span class="co"># TeX output</span></span>
+<span id="cb31-9"><a href="#cb31-9" tabindex="-1"></a><span class="fu">tablesave</span>(table1, <span class="st">&quot;table1.rtf&quot;</span>)             <span class="co"># RTF output</span></span></code></pre></div>
 <p>Format-specific parameters pass through to the underlying
 function:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">autotable</span>(</span>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">tablesave</span>(</span>
 <span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>  <span class="at">table =</span> table2,</span>
-<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table2.pdf&quot;</span>),</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table2.pdf&quot;</span>,</span>
 <span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Regression Analysis&quot;</span>,</span>
 <span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>  <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span>,</span>
 <span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a>  <span class="at">font_size =</span> <span class="dv">8</span>,</span>
@@ -890,12 +893,12 @@ and binary categorical variables</li>
 and survival variables (<code>desctable()</code> outputs only)</li>
 </ul>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a><span class="co"># Full display</span></span>
-<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a><span class="fu">table2docx</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1_Full.docx&quot;</span>))</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a><span class="fu">table2docx</span>(table1, <span class="st">&quot;table1_full.docx&quot;</span>)</span>
 <span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a></span>
 <span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a><span class="co"># Condense all variable types</span></span>
 <span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1_Condensed.docx&quot;</span>),</span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_condensed.docx&quot;</span>,</span>
 <span id="cb33-8"><a href="#cb33-8" tabindex="-1"></a>  <span class="at">condense_table =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb33-9"><a href="#cb33-9" tabindex="-1"></a>  <span class="at">zebra_stripes =</span> <span class="cn">TRUE</span></span>
 <span id="cb33-10"><a href="#cb33-10" tabindex="-1"></a>)</span>
@@ -903,7 +906,7 @@ and survival variables (<code>desctable()</code> outputs only)</li>
 <span id="cb33-12"><a href="#cb33-12" tabindex="-1"></a><span class="co"># Condense only continuous/survival (descriptive tables only)</span></span>
 <span id="cb33-13"><a href="#cb33-13" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb33-14"><a href="#cb33-14" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb33-15"><a href="#cb33-15" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1_CondenseQuant.docx&quot;</span>),</span>
+<span id="cb33-15"><a href="#cb33-15" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;table1_condensequant.docx&quot;</span>,</span>
 <span id="cb33-16"><a href="#cb33-16" tabindex="-1"></a>  <span class="at">condense_quantitative =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb33-17"><a href="#cb33-17" tabindex="-1"></a>  <span class="at">zebra_stripes =</span> <span class="cn">TRUE</span></span>
 <span id="cb33-18"><a href="#cb33-18" tabindex="-1"></a>)</span></code></pre></div>
@@ -1095,27 +1098,28 @@ and survival variables (<code>desctable()</code> outputs only)</li>
 <tbody>
 <tr class="odd">
 <td align="left">Data archival, further processing</td>
-<td align="left">CSV (.csv) or TSV (.tsv)</td>
+<td align="left">CSV (<code>.csv</code>) or TSV (<code>.tsv</code>)</td>
 </tr>
 <tr class="even">
 <td align="left">Journal submission</td>
-<td align="left">PDF (.pdf) or LaTeX (.tex)</td>
+<td align="left">PDF (<code>.pdf</code>) or LaTeX
+(<code>.tex</code>)</td>
 </tr>
 <tr class="odd">
 <td align="left">Manuscript drafts, collaboration</td>
-<td align="left">Word (.docx)</td>
+<td align="left">Word (<code>.docx</code>)</td>
 </tr>
 <tr class="even">
 <td align="left">Web/R Markdown</td>
-<td align="left">HTML (.html)</td>
+<td align="left">HTML (<code>.html</code>)</td>
 </tr>
 <tr class="odd">
 <td align="left">Presentations</td>
-<td align="left">PowerPoint (.pptx)</td>
+<td align="left">PowerPoint (<code>.pptx</code>)</td>
 </tr>
 <tr class="even">
 <td align="left">Maximum compatibility</td>
-<td align="left">RTF (.rtf)</td>
+<td align="left">RTF (<code>.rtf</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1142,9 +1146,9 @@ embedding</li>
 <span id="cb34-8"><a href="#cb34-8" tabindex="-1"></a>formats <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;csv&quot;</span>, <span class="st">&quot;pdf&quot;</span>, <span class="st">&quot;docx&quot;</span>, <span class="st">&quot;html&quot;</span>, <span class="st">&quot;pptx&quot;</span>, <span class="st">&quot;rtf&quot;</span>, <span class="st">&quot;tex&quot;</span>)</span>
 <span id="cb34-9"><a href="#cb34-9" tabindex="-1"></a></span>
 <span id="cb34-10"><a href="#cb34-10" tabindex="-1"></a><span class="cf">for</span> (fmt <span class="cf">in</span> formats) {</span>
-<span id="cb34-11"><a href="#cb34-11" tabindex="-1"></a>  <span class="fu">autotable</span>(</span>
+<span id="cb34-11"><a href="#cb34-11" tabindex="-1"></a>  <span class="fu">tablesave</span>(</span>
 <span id="cb34-12"><a href="#cb34-12" tabindex="-1"></a>    <span class="at">table =</span> table2,</span>
-<span id="cb34-13"><a href="#cb34-13" tabindex="-1"></a>    <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="fu">paste0</span>(<span class="st">&quot;Table2.&quot;</span>, fmt)),</span>
+<span id="cb34-13"><a href="#cb34-13" tabindex="-1"></a>    <span class="at">file =</span> <span class="fu">paste0</span>(<span class="st">&quot;Table2.&quot;</span>, fmt),</span>
 <span id="cb34-14"><a href="#cb34-14" tabindex="-1"></a>    <span class="at">caption =</span> common_opts<span class="sc">$</span>caption,</span>
 <span id="cb34-15"><a href="#cb34-15" tabindex="-1"></a>    <span class="at">bold_significant =</span> common_opts<span class="sc">$</span>bold_significant,</span>
 <span id="cb34-16"><a href="#cb34-16" tabindex="-1"></a>    <span class="at">indent_groups =</span> common_opts<span class="sc">$</span>indent_groups,</span>
@@ -1167,7 +1171,7 @@ debugging:</p>
 <span id="cb35-5"><a href="#cb35-5" tabindex="-1"></a><span class="co"># tinytex::install_tinytex()</span></span>
 <span id="cb35-6"><a href="#cb35-6" tabindex="-1"></a></span>
 <span id="cb35-7"><a href="#cb35-7" tabindex="-1"></a><span class="co"># Keep log files for debugging</span></span>
-<span id="cb35-8"><a href="#cb35-8" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;debug.pdf&quot;</span>), <span class="at">show_logs =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="st">&quot;debug.pdf&quot;</span>, <span class="at">show_logs =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
 <p>See <a href="installation_setup.html">Installation and Setup</a> for
 LaTeX configuration details.</p>
 </div>
@@ -1175,25 +1179,25 @@ LaTeX configuration details.</p>
 <h2>Table Too Wide</h2>
 <p>Several options address wide tables:</p>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="co"># Use landscape orientation</span></span>
-<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;wide.pdf&quot;</span>), <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="st">&quot;wide.pdf&quot;</span>, <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a></span>
 <span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a><span class="co"># Enable fit-to-page scaling</span></span>
-<span id="cb36-5"><a href="#cb36-5" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;wide.pdf&quot;</span>), <span class="at">fit_to_page =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb36-5"><a href="#cb36-5" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="st">&quot;wide.pdf&quot;</span>, <span class="at">fit_to_page =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb36-6"><a href="#cb36-6" tabindex="-1"></a></span>
 <span id="cb36-7"><a href="#cb36-7" tabindex="-1"></a><span class="co"># Reduce font size</span></span>
-<span id="cb36-8"><a href="#cb36-8" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;wide.pdf&quot;</span>), <span class="at">font_size =</span> <span class="dv">7</span>)</span></code></pre></div>
+<span id="cb36-8"><a href="#cb36-8" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="st">&quot;wide.pdf&quot;</span>, <span class="at">font_size =</span> <span class="dv">7</span>)</span></code></pre></div>
 </div>
 <div id="customizing-flextable-output" class="section level2">
 <h2>Customizing flextable Output</h2>
 <p>Get the flextable object for further customization:</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>ft <span class="ot">&lt;-</span> <span class="fu">table2docx</span>(table1, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.docx&quot;</span>), <span class="at">return_ft =</span> <span class="cn">TRUE</span>)</span>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>ft <span class="ot">&lt;-</span> <span class="fu">table2docx</span>(table1, <span class="st">&quot;table1.docx&quot;</span>, <span class="at">return_ft =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a></span>
 <span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a><span class="fu">library</span>(flextable)</span>
 <span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a>ft <span class="ot">&lt;-</span> ft <span class="sc">%&gt;%</span></span>
 <span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a>  <span class="fu">bold</span>(<span class="at">i =</span> <span class="dv">1</span>, <span class="at">part =</span> <span class="st">&quot;header&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb37-6"><a href="#cb37-6" tabindex="-1"></a>  <span class="fu">color</span>(<span class="at">i =</span> <span class="dv">1</span>, <span class="at">color =</span> <span class="st">&quot;navy&quot;</span>, <span class="at">part =</span> <span class="st">&quot;header&quot;</span>)</span>
 <span id="cb37-7"><a href="#cb37-7" tabindex="-1"></a></span>
-<span id="cb37-8"><a href="#cb37-8" tabindex="-1"></a><span class="fu">save_as_docx</span>(ft, <span class="at">path =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1_Custom.docx&quot;</span>))</span></code></pre></div>
+<span id="cb37-8"><a href="#cb37-8" tabindex="-1"></a><span class="fu">save_as_docx</span>(ft, <span class="at">path =</span> <span class="st">&quot;table1_custom.docx&quot;</span>)</span></code></pre></div>
 <hr />
 </div>
 </div>
@@ -1203,7 +1207,7 @@ LaTeX configuration details.</p>
 <li><a href="descriptive_tables.html">Descriptive Tables</a>:
 <code>desctable()</code> for baseline characteristics</li>
 <li><a href="regression_modeling.html">Regression Modeling</a>:
-<code>fit()</code>, <code>uniscreen()</code>, and
+<code>uniscreen()</code>, <code>fit()</code>, and
 <code>fullfit()</code></li>
 <li><a href="model_comparison.html">Model Comparison</a>:
 <code>compfit()</code> for comparing models</li>

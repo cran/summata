@@ -20,6 +20,22 @@ knitr::opts_chunk$set(
 # packageVersion("summata")
 
 ## -----------------------------------------------------------------------------
+# # For mixed-effects models
+# install.packages(c("lme4", "coxme"))
+# 
+# # For table export (all formats)
+# install.packages(c("xtable", "flextable", "officer", "knitr", "tinytex"))
+# 
+# # For enhanced graphics
+# install.packages(c("ragg", "systemfonts"))
+# 
+# # For model diagnostics and selection
+# install.packages(c("MASS", "MuMIn", "pROC", "ResourceSelection"))
+
+## -----------------------------------------------------------------------------
+# install.packages("summata", dependencies = TRUE)
+
+## -----------------------------------------------------------------------------
 # install.packages("tinytex")
 # tinytex::install_tinytex()
 
@@ -40,15 +56,15 @@ knitr::opts_chunk$set(
 # )
 # 
 # # Test Word export (requires flextable, officer)
-# table2docx(test_data, file = file.path(tempdir(), "verification_test.docx"))
+# table2docx(test_data, file = "verification_test.docx")
 # 
 # # Test PDF export (requires xtable, LaTeX)
-# table2pdf(test_data, file = file.path(tempdir(), "verification_test.pdf"))
+# table2pdf(test_data, file = "verification_test.pdf")
 # 
 # # Clean up
 # file.remove(
-#   file.path(tempdir(), "verification_test.docx"),
-#   file.path(tempdir(), "verification_test.pdf")
+#   "verification_test.docx",
+#   "verification_test.pdf"
 # )
 
 ## -----------------------------------------------------------------------------
@@ -58,7 +74,7 @@ knitr::opts_chunk$set(
 # tinytex::tlmgr_install("package_name")
 
 ## -----------------------------------------------------------------------------
-# table2pdf(test_data, file = file.path(tempdir(), "debug.pdf"), show_logs = TRUE)
+# table2pdf(test_data, file = "debug.pdf", show_logs = TRUE)
 
 ## -----------------------------------------------------------------------------
 # options(repos = c(CRAN = "https://cloud.r-project.org"))

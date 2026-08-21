@@ -1,7 +1,7 @@
 Package: summata
 Type: Package
 Title: Publication-Ready Summary Tables and Forest Plots
-Version: 0.11.5
+Version: 0.12.0
 Authors@R: c(
     person(
         given = c("Paul", "Hsin-ti"), 
@@ -25,17 +25,24 @@ URL: https://phmcc.codeberg.page/summata/,
         https://codeberg.org/phmcc/summata,
         https://github.com/phmcc/summata
 BugReports: https://github.com/phmcc/summata/issues
-RoxygenNote: 7.3.3
 Depends: R (>= 4.2.0)
-Imports: data.table, survival, ggplot2, stats, grDevices
-Suggests: MASS, coxme, flextable, knitr, lme4, MuMIn, officer, pROC,
-        ragg, ResourceSelection, rmarkdown, stringr, systemfonts,
-        tinytex, withr, xtable
+Imports: data.table, survival, ggplot2, stats, grDevices, parallel,
+        tools, utils
+Suggests: MASS, coxme, flextable, grid, knitr, lme4, MuMIn, officer,
+        pROC, ragg, ResourceSelection, reformulas, rmarkdown, stringr,
+        systemfonts, testthat, tinytex, withr, xtable
+SystemRequirements: All optional. A 'LaTeX' distribution providing
+        pdflatex or xelatex, and kpsewhich, for PDF output from
+        table2pdf(); pdfcrop for auto-sized PDF output; Ghostscript for
+        the optional font embedding in forestsave(). Each feature
+        reports the absence of its tool and the remainder of the
+        package is unaffected.
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-05-07 03:48:01 UTC; paul
+Packaged: 2026-08-21 00:23:17 UTC; paul
 Author: Paul Hsin-ti McClelland [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-3119-6531>)
 Maintainer: Paul Hsin-ti McClelland <PaulHMcClelland@protonmail.com>
 Repository: CRAN
-Date/Publication: 2026-05-07 11:40:19 UTC
+Date/Publication: 2026-08-21 06:00:02 UTC

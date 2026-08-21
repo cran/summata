@@ -1,3 +1,5 @@
+### * Main function
+
 #' Export Table to Rich Text Format (RTF)
 #'
 #' Converts a data frame, data.table, or matrix to a Rich Text Format (\code{.rtf}) 
@@ -89,6 +91,10 @@
 #'   Default is \code{FALSE}.
 #'   
 #' @param ... Additional arguments (currently unused, reserved for future extensions).
+#'
+#' @param quiet Logical. Suppress progress and confirmation messages, such
+#'   as the notice reporting the file written. Errors and warnings are
+#'   unaffected. Default is \code{FALSE}.
 #'
 #' @return Behavior depends on \code{return_ft}:
 #'   \describe{
@@ -235,7 +241,7 @@
 #' }
 #' 
 #' @seealso
-#' \code{\link{autotable}} for automatic format detection,
+#' \code{\link{tablesave}} for saving in the format given by the file extension,
 #' \code{\link{table2docx}} for Word documents,
 #' \code{\link{table2pptx}} for PowerPoint slides,
 #' \code{\link{table2pdf}} for PDF output,
@@ -372,6 +378,7 @@ table2rtf <- function(table,
                     width = NULL,
                     align = NULL,
                     return_ft = FALSE,
+                    quiet = FALSE,
                     ...) {
     
     ## Warn about unused arguments
@@ -525,7 +532,7 @@ table2rtf <- function(table,
         flextable::save_as_rtf(ft, path = file)
     }
     
-    message(sprintf("Table exported to %s", file))
+    if (!quiet) message(sprintf("Table saved to %s", file))
     
     ## Return based on user preference
     if (return_ft) {
@@ -544,6 +551,9 @@ table2rtf <- function(table,
     }
 }
 
+
+### * Print function
+
 #' Print method for table2rtf results
 #'
 #' @param x Object of class \code{table2rtf_result}.
@@ -553,7 +563,7 @@ table2rtf <- function(table,
 #' @keywords internal
 #' @export
 print.table2rtf_result <- function(x, ...) {
-    cat("Table exported to:", x$file, "\n")
+    cat("Table saved to:", x$file, "\n")
     if (!is.null(x$caption)) {
         cat("Caption:", x$caption, "\n")
     }

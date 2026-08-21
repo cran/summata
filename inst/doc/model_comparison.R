@@ -249,21 +249,21 @@ scenario3
 # # Main comparison table
 # table2docx(
 #   table = example1,
-#   file = file.path(tempdir(), "Model_Comparison.docx"),
+#   file = "model_comparison.docx",
 #   caption = "Table 3. Model Comparison Results"
 # )
 # 
 # # Coefficient table
 # table2docx(
 #   table = attr(example6, "coefficients"),
-#   file = file.path(tempdir(), "Coefficient_Comparison.docx"),
+#   file = "coefficient_comparison.docx",
 #   caption = "Table S1. Coefficient Estimates Across Models"
 # )
 # 
 # # PDF with landscape orientation for wide tables
 # table2pdf(
 #   table = example1,
-#   file = file.path(tempdir(), "Model_Comparison.pdf"),
+#   file = "model_comparison.pdf",
 #   caption = "Model Comparison",
 #   orientation = "landscape"
 # )

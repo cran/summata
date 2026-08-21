@@ -55,7 +55,12 @@ example3 <- survtable(
   by = "stage",
   times = NULL,
   probs = c(0.25, 0.5, 0.75),
-  labels = clintrial_labels
+  labels = c(
+    "I" = "Stage I",
+    "II" = "Stage II",
+    "III" = "Stage III",
+    "IV" = "Stage IV"
+  )
 )
 
 example3
@@ -133,22 +138,22 @@ example6
 # )
 # 
 # # Export both for publication
-# ggsave(file.path(tempdir(), "km_curve.pdf"), width = 8, height = 6)
-# table2pdf(surv_table, file.path(tempdir(), "survival_table.pdf"),
+# ggsave("km_curve.pdf", width = 8, height = 6)
+# table2pdf(surv_table, "survival_table.pdf",
 #           caption = "Table 2. Survival Estimates by Treatment Group")
 
 ## ----eval = FALSE-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 # # Microsoft Word
 # table2docx(
 #   table = example1,
-#   file = file.path(tempdir(), "SurvivalTable.docx"),
+#   file = "survival_table.docx",
 #   caption = "Table 2. Survival Estimates by Treatment Group"
 # )
 # 
 # # PDF (requires LaTeX)
 # table2pdf(
 #   table = example1,
-#   file = file.path(tempdir(), "SurvivalTable.pdf"),
+#   file = "survival_table.pdf",
 #   caption = "Table 2. Survival Estimates by Treatment Group"
 # )
 

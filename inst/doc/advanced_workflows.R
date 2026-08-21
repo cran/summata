@@ -26,33 +26,30 @@ if (requireNamespace("ragg", quietly = TRUE)) {
   )
 }
 
-## Dynamic figure sizing: queue_plot() stashes rec_dims from a plot object,
-## and the opts_hook on the NEXT chunk (with use_rec_dims = TRUE) applies them
-## before knitr opens the graphics device. Plots render via ragg (dev = "ragg_png"
-## set above) and knitr captures them natively. No files written to disk.
-.plot_dims <- new.env(parent = emptyenv())
-.plot_dims$width <- NULL
-.plot_dims$height <- NULL
+## Dynamic figure sizing. A chunk that renders a forest plot names the object it
+## is about to print, by giving the chunk option rec_dims_from = "example1".
+##
+## Chunk options are resolved before knitr opens the graphics device, so this
+## hook reads the plot's recommended dimensions from its "rec_dims" attribute
+## and sets fig.width and fig.height from them. The object was created in an
+## earlier chunk and so already exists in the knit environment. Plots render via
+## ragg (dev = "ragg_png" set above) and knitr captures them natively; no files
+## are written to disk.
+##
+## A plot without recommended dimensions, or a name that does not resolve,
+## falls through to the default figure size rather than failing the build.
+knitr::opts_hooks$set(rec_dims_from = function(options) {
+  plot <- get0(options$rec_dims_from, envir = knitr::knit_global(),
+               ifnotfound = NULL)
+  dims <- attr(plot, "rec_dims")
 
-knitr::opts_hooks$set(use_rec_dims = function(options) {
-  if (isTRUE(options$use_rec_dims)) {
-    if (!is.null(.plot_dims$width))  options$fig.width  <- .plot_dims$width
-    if (!is.null(.plot_dims$height)) options$fig.height <- .plot_dims$height
-    .plot_dims$width <- NULL
-    .plot_dims$height <- NULL
+  if (!is.null(dims)) {
+    options$fig.width  <- dims$width
+    options$fig.height <- dims$height
   }
+
   options
 })
-
-## Call at the end of a plot-creation chunk to stash dimensions for the next chunk.
-queue_plot <- function(plot) {
-  dims <- attr(plot, "rec_dims")
-  if (!is.null(dims)) {
-    .plot_dims$width  <- dims$width
-    .plot_dims$height <- dims$height
-  }
-  invisible(plot)
-}
 
 ## ----setup------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 library(summata)
@@ -67,10 +64,7 @@ table(clintrial$site)
 
 ## ----eval = FALSE-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 # p <- glmforest(model, data = mydata)
-# dims <- attr(p, "rec_dims")
-# ggplot2::ggsave("forest_plot.png", p,
-#                 width = dims$width,
-#                 height = dims$height)
+# forestsave(p, "forest_plot.png")
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 example1 <- fit(
@@ -159,9 +153,8 @@ example6 <- glmforest(
   indent_groups = TRUE,
   zebra_stripes = TRUE
 )
-queue_plot(example6)
 
-## ----echo = FALSE, out.width = "100%", use_rec_dims = TRUE------------------------------------------------------------------------------------------------------------------------
+## ----echo = FALSE, out.width = "100%", rec_dims_from = "example6"-----------------------------------------------------------------------------------------------------------------
 print(example6)
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -217,9 +210,8 @@ example11 <- glmforest(
   indent_groups = TRUE,
   zebra_stripes = TRUE
 )
-queue_plot(example11)
 
-## ----echo = FALSE, out.width = "100%", use_rec_dims = TRUE------------------------------------------------------------------------------------------------------------------------
+## ----echo = FALSE, out.width = "100%", rec_dims_from = "example11"----------------------------------------------------------------------------------------------------------------
 print(example11)
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -311,12 +303,12 @@ uni_results <- uniscreen(
 example18 <- uniforest(
   uni_results,
   title = "Univariable Screening Results",
+  labels = clintrial_labels,
   indent_groups = TRUE,
   zebra_stripes = TRUE
 )
-queue_plot(example18)
 
-## ----echo = FALSE, out.width = "100%", use_rec_dims = TRUE------------------------------------------------------------------------------------------------------------------------
+## ----echo = FALSE, out.width = "100%", rec_dims_from = "example18"----------------------------------------------------------------------------------------------------------------
 print(example18)
 
 ## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -392,12 +384,12 @@ effects
 forest_plot <- multiforest(
   effects,
   title = "Effects Across Outcomes",
+  labels = clintrial_labels,
   indent_predictor = TRUE,
   zebra_stripes = TRUE
 )
-queue_plot(forest_plot)
 
-## ----echo = FALSE, out.width = "100%", use_rec_dims = TRUE------------------------------------------------------------------------------------------------------------------------
+## ----echo = FALSE, out.width = "100%", rec_dims_from = "forest_plot"--------------------------------------------------------------------------------------------------------------
 print(forest_plot)
 
 ## ----eval = FALSE-----------------------------------------------------------------------------------------------------------------------------------------------------------------

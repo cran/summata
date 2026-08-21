@@ -1,26 +1,4 @@
-#' Fix negative zero in formatted strings
-#' 
-#' Corrects floating-point rounding artifacts that produce "-0.00" or similar
-#' negative zero strings. Works on character vectors, replacing patterns like
-#' "-0.00", "-0.000", \emph{etc.} with their positive equivalents, even when embedded
-#' within larger strings (\emph{e.g.,} "(-0.00, 1.23)" becomes "(0.00, 1.23)").
-#' 
-#' When \code{marks} is supplied, also replaces the period decimal mark with
-#' the locale-appropriate decimal mark.
-#' 
-#' @param x Character vector of formatted numbers.
-#' @param marks Optional list with \code{big.mark} and \code{decimal.mark} as
-#'   returned by \code{\link{resolve_number_marks}}. When \code{NULL}, uses
-#'   the default US period decimal.
-#' @return Character vector with negative zeros corrected.
-#' @keywords internal
-fix_negative_zero <- function(x, marks = NULL) {
-    if (!is.null(marks)) {
-        return(apply_decimal_mark(x, marks))
-    }
-    ## Fallback: US locale (period decimal)
-    gsub("(?<![0-9])-0(\\.0+)(?![0-9])", "0\\1", x, perl = TRUE)
-}
+### * Table formatting
 
 #' Format model results for publication-ready display
 #' 
@@ -55,7 +33,7 @@ format_model_table <- function(data,
                                conf_level = 0.95,
                                marks = NULL) {
     
-    ## Determine which columns we actually need to avoid copying everything
+    ## Determine the required columns, to avoid copying the whole table
     ## Start with columns that will be in output
     needed_cols <- c("variable", "group", "n", "n_group", "events", "events_group",
                      "p_value", "ci_lower", "ci_upper", "reference", "model_type",
@@ -372,6 +350,31 @@ format_model_table <- function(data,
     return(formatted)
 }
 
+
+### * Ancillary formatters
+
+#' Fix negative zero in formatted strings
+#' 
+#' Corrects floating-point rounding artifacts that produce "-0.00" or similar
+#' negative zero strings. Works on character vectors, replacing patterns like
+#' "-0.00", "-0.000", \emph{etc.} with their positive equivalents, even when embedded
+#' within larger strings (\emph{e.g.,} "(-0.00, 1.23)" becomes "(0.00, 1.23)").
+#' 
+#' @param x Character vector of formatted numbers.
+#' @param marks Optional list with \code{big.mark} and \code{decimal.mark} as
+#'   returned by \code{\link{resolve_number_marks}}. When \code{NULL}, uses
+#'   the default US period decimal.
+#' @return Character vector with negative zeros corrected.
+#' @keywords internal
+fix_negative_zero <- function(x, marks = NULL) {
+    if (!is.null(marks)) {
+        return(apply_decimal_mark(x, marks))
+    }
+    ## Fallback: US locale (period decimal)
+    gsub("(?<![0-9])-0(\\.0+)(?![0-9])", "0\\1", x, perl = TRUE)
+}
+
+
 #' Format \emph{p}-values for display
 #' 
 #' Converts numeric \emph{p}-values to formatted character strings using vectorized
@@ -408,6 +411,9 @@ format_pvalues_fit <- function(p, digits = 3, marks = NULL) {
     
     result
 }
+
+
+### * Fit validation
 
 #' Check if outcome is a Surv() expression
 #' 
@@ -461,8 +467,6 @@ detect_outcome_type <- function(data, outcome) {
 #' and GLM family (if applicable). Detects common mismatches like using survival
 #' outcomes with non-survival models or binary outcomes with linear models.
 #' Can auto-correct fixable issues or raise informative errors.
-#'
-#' Checks for mismatches and auto-corrects or errors as appropriate.
 #'
 #' @param outcome Character string outcome specification (may include Surv()).
 #' @param model_type Character string specified model type.
@@ -686,6 +690,9 @@ validate_fit_inputs <- function(data, outcome, predictors, model_type,
     validation
 }
 
+
+### * Miscellaneous functions
+
 #' Fit a model with selective warning suppression
 #'
 #' Wraps model fitting expressions to suppress routine warnings from mixed-effects
@@ -700,23 +707,31 @@ validate_fit_inputs <- function(data, outcome, predictors, model_type,
 #' @keywords internal
 quiet_fit <- function(expr, verbose = FALSE) {
     if (verbose) {
-        eval.parent(expr)
-    } else {
-        withCallingHandlers(
-            eval.parent(expr),
-            warning = function(w) {
-                msg <- conditionMessage(w)
-                if (grepl(
-                    paste0("singular|convergence|step size|maxfun|",
-                           "fitted probabilities numerically 0 or 1|",
-                           "fitted rates numerically 0|",
-                           "algorithm did not converge|",
-                           "number of observations.*less than"),
-                    msg, ignore.case = TRUE
-                )) {
-                    invokeRestart("muffleWarning")
-                }
-            }
-        )
+        return(eval.parent(expr))
     }
+
+    ## Diagnostics that are expected during screening and are reported through
+    ## the fitted result rather than the console
+    fit_noise <- paste0("singular|convergence|step size|maxfun|",
+                        "fitted probabilities numerically 0 or 1|",
+                        "fitted rates numerically 0|",
+                        "algorithm did not converge|",
+                        "number of observations.*less than")
+
+    ## Both condition classes are handled: lme4 raises a singular fit as a
+    ## message rather than a warning, so a warning handler alone leaves
+    ## "boundary (singular) fit" on the console.
+    withCallingHandlers(
+        eval.parent(expr),
+        warning = function(w) {
+            if (grepl(fit_noise, conditionMessage(w), ignore.case = TRUE)) {
+                invokeRestart("muffleWarning")
+            }
+        },
+        message = function(m) {
+            if (grepl(fit_noise, conditionMessage(m), ignore.case = TRUE)) {
+                invokeRestart("muffleMessage")
+            }
+        }
+    )
 }

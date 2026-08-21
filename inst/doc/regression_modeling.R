@@ -79,6 +79,7 @@ example5 <- uniscreen(
   data = clintrial,
   outcome = "readmission_30d",
   predictors = c("age", "sex", "stage"),
+  labels = clintrial_labels,
   model_type = "glm",
   keep_models = TRUE
 )
@@ -152,6 +153,7 @@ example11 <- fit(
   data = clintrial,
   outcome = "readmission_30d",
   predictors = c("age", "sex", "stage"),
+  labels = clintrial_labels,
   model_type = "glm",
   conf_level = 0.90
 )
@@ -164,6 +166,7 @@ example12a <- fit(
   data = clintrial,
   outcome = "readmission_30d",
   predictors = c("age", "sex", "stage"),
+  labels = clintrial_labels,
   model_type = "glm",
   conf_method = "profile"
 )
@@ -175,6 +178,7 @@ example12b <- fit(
   data = clintrial,
   outcome = "readmission_30d",
   predictors = c("age", "sex", "stage"),
+  labels = clintrial_labels,
   model_type = "glm",
   conf_method = "wald"
 )
@@ -240,6 +244,7 @@ example17a <- fullfit(
   data = clintrial,
   outcome = "wound_infection",
   predictors = c("age", "sex", "stage"),
+  labels = clintrial_labels,
   model_type = "glm",
   columns = "uni"
 )
@@ -251,6 +256,7 @@ example17b <- fullfit(
   data = clintrial,
   outcome = "wound_infection",
   predictors = c("age", "sex", "stage"),
+  labels = clintrial_labels,
   model_type = "glm",
   columns = "multi"
 )
@@ -383,14 +389,14 @@ example26
 # # Microsoft Word
 # table2docx(
 #   table = example13,
-#   file = file.path(tempdir(), "Table2_Regression.docx"),
+#   file = "table2_regression.docx",
 #   caption = "Table 2. Univariable and Multivariable Analysis"
 # )
 # 
 # # PDF
 # table2pdf(
 #   table = example13,
-#   file = file.path(tempdir(), "Table2_Regression.pdf"),
+#   file = "table2_regression.pdf",
 #   caption = "Table 2. Regression Results"
 # )
 

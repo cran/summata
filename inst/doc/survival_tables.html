@@ -447,32 +447,39 @@ context.</p>
 <div id="example-3-survival-quartiles" class="section level2">
 <h2><strong>Example 3:</strong> Survival Quartiles</h2>
 <p>Report multiple survival quantiles by specifying the
-<code>probs</code> parameter:</p>
+<code>probs</code> parameter. Note that <code>labels</code> names levels
+of the <code>by</code> variable here, rather than variable names as in
+<code>desctable()</code> and the regression functions:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>example3 <span class="ot">&lt;-</span> <span class="fu">survtable</span>(</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">data =</span> clintrial,</span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">outcome =</span> <span class="st">&quot;Surv(os_months, os_status)&quot;</span>,</span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">&quot;stage&quot;</span>,</span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">times =</span> <span class="cn">NULL</span>,</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>),</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">labels =</span> clintrial_labels</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>example3</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; Stratified by: stage</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; Quantiles: 25%, 50%, 75%</span></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt;    Variable 75% Survival Time (95% CI)  Median (95% CI) 25% Survival Time (95% CI) p-value</span></span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt;      &lt;char&gt;                     &lt;char&gt;           &lt;char&gt;                     &lt;char&gt;  &lt;char&gt;</span></span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; 1:    Total              5.1 (4.3-6.1) 19.5 (16.1-23.5)                         NR &lt; 0.001</span></span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 2:        I             9.0 (7.4-12.5) 33.7 (22.4-45.2)                         NR        </span></span>
-<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 3:       II             7.7 (6.1-12.3) 32.2 (24.8-42.0)                         NR        </span></span>
-<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 4:      III              3.9 (3.0-5.2) 13.7 (10.4-22.3)             44.7 (35.8-NR)        </span></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 5:       IV              2.0 (1.4-2.8)    5.9 (4.3-8.2)           15.6 (10.8-26.7)</span></span></code></pre></div>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">labels =</span> <span class="fu">c</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    <span class="st">&quot;I&quot;</span> <span class="ot">=</span> <span class="st">&quot;Stage I&quot;</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>    <span class="st">&quot;II&quot;</span> <span class="ot">=</span> <span class="st">&quot;Stage II&quot;</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>    <span class="st">&quot;III&quot;</span> <span class="ot">=</span> <span class="st">&quot;Stage III&quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>    <span class="st">&quot;IV&quot;</span> <span class="ot">=</span> <span class="st">&quot;Stage IV&quot;</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  )</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>)</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>example3</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Survival Summary Table</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; Outcome: Surv(os_months, os_status)</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; Stratified by: stage</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; Quantiles: 25%, 50%, 75%</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; Statistic: Survival probability</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; Test: Log-rank (p = &lt; 0.001)</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt;     Variable 75% Survival Time (95% CI)  Median (95% CI) 25% Survival Time (95% CI) p-value</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt;       &lt;char&gt;                     &lt;char&gt;           &lt;char&gt;                     &lt;char&gt;  &lt;char&gt;</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 1:     Total              5.1 (4.3-6.1) 19.5 (16.1-23.5)                         NR &lt; 0.001</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; 2:   Stage I             9.0 (7.4-12.5) 33.7 (22.4-45.2)                         NR        </span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; 3:  Stage II             7.7 (6.1-12.3) 32.2 (24.8-42.0)                         NR        </span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; 4: Stage III              3.9 (3.0-5.2) 13.7 (10.4-22.3)             44.7 (35.8-NR)        </span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; 5:  Stage IV              2.0 (1.4-2.8)    5.9 (4.3-8.2)           15.6 (10.8-26.7)</span></span></code></pre></div>
 <hr />
 </div>
 </div>
@@ -625,8 +632,8 @@ for publication:</p>
 <span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>)</span>
 <span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a></span>
 <span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co"># Export both for publication</span></span>
-<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;km_curve.pdf&quot;</span>), <span class="at">width =</span> <span class="dv">8</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="fu">table2pdf</span>(surv_table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;survival_table.pdf&quot;</span>), </span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">&quot;km_curve.pdf&quot;</span>, <span class="at">width =</span> <span class="dv">8</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="fu">table2pdf</span>(surv_table, <span class="st">&quot;survival_table.pdf&quot;</span>, </span>
 <span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a>          <span class="at">caption =</span> <span class="st">&quot;Table 2. Survival Estimates by Treatment Group&quot;</span>)</span></code></pre></div>
 <p>This workflow ensures that the Kaplan-Meier curve and survival table
 report consistent time points and groupings.</p>
@@ -641,14 +648,14 @@ documentation.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Microsoft Word</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">table =</span> example1,</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;SurvivalTable.docx&quot;</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;survival_table.docx&quot;</span>,</span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Survival Estimates by Treatment Group&quot;</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>)</span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
 <span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co"># PDF (requires LaTeX)</span></span>
 <span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">table =</span> example1,</span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;SurvivalTable.pdf&quot;</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;survival_table.pdf&quot;</span>,</span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 2. Survival Estimates by Treatment Group&quot;</span></span>
 <span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>)</span></code></pre></div>
 <hr />
@@ -684,7 +691,7 @@ point</li>
 <li><a href="descriptive_tables.html">Descriptive Tables</a>:
 <code>desctable()</code> for baseline characteristics</li>
 <li><a href="regression_modeling.html">Regression Modeling</a>:
-<code>fit()</code>, <code>uniscreen()</code>, and
+<code>uniscreen()</code>, <code>fit()</code>, and
 <code>fullfit()</code></li>
 <li><a href="model_comparison.html">Model Comparison</a>:
 <code>compfit()</code> for comparing models</li>

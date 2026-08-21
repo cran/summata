@@ -422,11 +422,11 @@ type:</p>
 </tr>
 </tbody>
 </table>
-<p>For categorical variables, Fisher exact test is used when any
-expected cell count falls below 5. For continuous variables, the test
-selection follows the displayed statistic: parametric tests are used
-with mean-based statistics, nonparametric tests with median-based
-statistics.</p>
+<p>By default, Fisher exact test is used when any expected cell count
+falls below 5 for categorical variables. Similarly, the test selection
+for continuous variables will follow the displayed statistic unless
+otherwise specified: parametric tests are used with mean-based
+statistics, nonparametric tests with median-based statistics.</p>
 <hr />
 </div>
 <div id="basic-usage" class="section level1">
@@ -978,21 +978,21 @@ documentation.</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co"># Microsoft Word</span></span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">table2docx</span>(</span>
 <span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.docx&quot;</span>),</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;Table1.docx&quot;</span>,</span>
 <span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics by Group&quot;</span></span>
 <span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>)</span>
 <span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a></span>
 <span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co"># PDF (requires LaTeX)</span></span>
 <span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="fu">table2pdf</span>(</span>
 <span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.pdf&quot;</span>),</span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;Table1.pdf&quot;</span>,</span>
 <span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics by Group&quot;</span></span>
 <span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a>)</span>
 <span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a></span>
 <span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="co"># HTML</span></span>
 <span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="fu">table2html</span>(</span>
 <span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a>  <span class="at">table =</span> table1,</span>
-<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a>  <span class="at">file =</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;Table1.html&quot;</span>),</span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">&quot;Table1.html&quot;</span>,</span>
 <span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">&quot;Table 1. Baseline Characteristics by Group&quot;</span></span>
 <span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a>)</span></code></pre></div>
 <hr />
@@ -1050,7 +1050,7 @@ levels are explicitly defined:</p>
 <h2>Large Tables</h2>
 <p>For tables with many variables, consider splitting by category or
 using landscape orientation for export:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;table1.pdf&quot;</span>), <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span>, <span class="at">font_size =</span> <span class="dv">8</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">table2pdf</span>(table, <span class="st">&quot;table1.pdf&quot;</span>, <span class="at">orientation =</span> <span class="st">&quot;landscape&quot;</span>, <span class="at">font_size =</span> <span class="dv">8</span>)</span></code></pre></div>
 <hr />
 </div>
 </div>
@@ -1060,7 +1060,7 @@ using landscape orientation for export:</p>
 <li><a href="survival_tables.html">Survival Tables</a>:
 <code>survtable()</code> for time-to-event summaries</li>
 <li><a href="regression_modeling.html">Regression Modeling</a>:
-<code>fit()</code>, <code>uniscreen()</code>, and
+<code>uniscreen()</code>, <code>fit()</code>, and
 <code>fullfit()</code></li>
 <li><a href="model_comparison.html">Model Comparison</a>:
 <code>compfit()</code> for comparing models</li>
