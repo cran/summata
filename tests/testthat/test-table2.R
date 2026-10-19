@@ -4,14 +4,12 @@
 #' table2pdf, table2tex, table2rtf. Focuses on input validation, 
 #' file creation, and integration with summata output.
 #' 
-#' @details Run with testthat::test_file("tests/testthat/test-table2export.R")
+#' @details Run with testthat::test_file("tests/testthat/test-table2.R")
 
 library(data.table)
 
-## ============================================================================
-## Setup: Create test data
-## ============================================================================
 
+### * Setup: Create test data
 
 ## Create sample tables for testing
 clintrial$response <- as.integer(clintrial$os_status == 1 & clintrial$os_months < 24)
@@ -34,9 +32,7 @@ simple_table <- data.frame(
 )
 
 
-## ============================================================================
-## SECTION 1: table2docx Input Validation
-## ============================================================================
+### * table2docx input validation
 
 test_that("table2docx requires .docx extension", {
     
@@ -74,9 +70,7 @@ test_that("table2docx validates orientation parameter", {
 })
 
 
-## ============================================================================
-## SECTION 9: table2pptx Input Validation
-## ============================================================================
+### * table2pptx input validation
 
 test_that("table2pptx requires .pptx extension", {
     
@@ -90,13 +84,11 @@ test_that("table2pptx requires .pptx extension", {
 })
 
 
-## ============================================================================
-## SECTION 10: table2html Input Validation
-## ============================================================================
+### * table2html input validation
 
 test_that("table2html requires .html extension", {
     
-    skip_if_not_installed("kableExtra")
+    skip_if_not_installed("xtable")
     
     expect_error(
         table2html(simple_table, "output.txt"),
@@ -105,9 +97,7 @@ test_that("table2html requires .html extension", {
 })
 
 
-## ============================================================================
-## SECTION 11: table2pdf Input Validation
-## ============================================================================
+### * table2pdf input validation
 
 test_that("table2pdf requires .pdf extension", {
     
@@ -121,9 +111,7 @@ test_that("table2pdf requires .pdf extension", {
 })
 
 
-## ============================================================================
-## SECTION 12: table2tex Input Validation
-## ============================================================================
+### * table2tex input validation
 
 test_that("table2tex requires .tex extension", {
     
@@ -136,9 +124,7 @@ test_that("table2tex requires .tex extension", {
 })
 
 
-## ============================================================================
-## SECTION 13: table2rtf Input Validation
-## ============================================================================
+### * table2rtf input validation
 
 test_that("table2rtf requires .rtf extension", {
     
@@ -152,9 +138,7 @@ test_that("table2rtf requires .rtf extension", {
 })
 
 
-## ============================================================================
-## SECTION 14: File Creation Tests (Integration)
-## ============================================================================
+### * File creation tests (integration)
 
 test_that("table2docx creates file", {
     
@@ -225,7 +209,7 @@ test_that("table2pptx creates file", {
 
 test_that("table2html creates file", {
     
-    skip_if_not_installed("kableExtra")
+    skip_if_not_installed("xtable")
     skip_on_cran()
     
     temp_file <- tempfile(fileext = ".html")
@@ -251,9 +235,7 @@ test_that("table2tex creates file", {
 })
 
 
-## ============================================================================
-## SECTION 15: Package Requirement Tests
-## ============================================================================
+### * Package requirement tests
 
 test_that("table2docx checks for flextable package", {
     
@@ -265,21 +247,13 @@ test_that("table2docx checks for flextable package", {
 })
 
 
-test_that("table2html checks for kableExtra package", {
-    
-    expect_true(is.function(table2html))
-})
-
-
 test_that("table2pdf checks for xtable package", {
     
     expect_true(is.function(table2pdf))
 })
 
 
-## ============================================================================
-## SECTION 16: Option Processing Tests
-## ============================================================================
+### * Option processing tests
 
 test_that("table2docx processes indent_groups option", {
     
@@ -363,9 +337,54 @@ test_that("table2docx processes font options", {
 })
 
 
-## ============================================================================
-## SECTION 17: Integration with summata Output
-## ============================================================================
+test_that("table2tex keeps the p-values of factor levels when indenting", {
+
+    skip_if_not_installed("xtable")
+    skip_on_cran()
+
+    temp_file <- tempfile(fileext = ".tex")
+    on.exit(unlink(temp_file), add = TRUE)
+
+    table2tex(test_table, temp_file, indent_groups = TRUE, quiet = TRUE)
+    tex <- readLines(temp_file)
+
+    ## Each indented level row carries the p-value of its level
+    for (level in c("Male", "II", "III", "IV")) {
+        row <- grep(paste0("\\hspace{1em}", level, " &"), tex,
+                    fixed = TRUE, value = TRUE)
+        expect_length(row, 1L)
+        expect_true(grepl(test_table$`p-value`[test_table$Group == level],
+                          row, fixed = TRUE), info = level)
+    }
+})
+
+
+test_that("table2html reports the second level of a binary variable when condensing", {
+
+    skip_if_not_installed("xtable")
+    skip_on_cran()
+
+    desc_table <- desctable(
+        data = clintrial,
+        by = "treatment",
+        variables = c("age", "sex")
+    )
+    male_total <- desc_table$Total[desc_table$Group == "Male"]
+
+    temp_file <- tempfile(fileext = ".html")
+    on.exit(unlink(temp_file), add = TRUE)
+
+    table2html(desc_table, temp_file, condense_table = TRUE, quiet = TRUE)
+    html <- readLines(temp_file)
+
+    ## The condensed row names the level it reports
+    row <- grep("<td> sex (Male) </td>", html, fixed = TRUE, value = TRUE)
+    expect_length(row, 1L)
+    expect_true(grepl(male_total, row, fixed = TRUE))
+})
+
+
+### * Integration with summata output
 
 test_that("table2docx works with fit() output", {
     
@@ -405,7 +424,7 @@ test_that("table2docx works with desctable() output", {
 
 test_that("table2html works with fit() output", {
     
-    skip_if_not_installed("kableExtra")
+    skip_if_not_installed("xtable")
     skip_on_cran()
     
     temp_file <- tempfile(fileext = ".html")
@@ -417,9 +436,7 @@ test_that("table2html works with fit() output", {
 })
 
 
-## ============================================================================
-## SECTION 18: Edge Cases
-## ============================================================================
+### * Edge cases
 
 test_that("table2docx handles empty table gracefully", {
     

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 # remotes::install_github("phmcc/summata")
 
 ## -----------------------------------------------------------------------------
-# remotes::install_git("https://codeberg.org/phmcc/summata.git")
+# remotes::install_git("https://codefloe.com/phmcc/summata.git")
 
 ## -----------------------------------------------------------------------------
 # library(summata)
@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 # install.packages(c("ragg", "systemfonts"))
 # 
 # # For model diagnostics and selection
-# install.packages(c("MASS", "MuMIn", "pROC", "ResourceSelection"))
+# install.packages(c("MASS", "MuMIn", "ResourceSelection"))
 
 ## -----------------------------------------------------------------------------
 # install.packages("summata", dependencies = TRUE)
