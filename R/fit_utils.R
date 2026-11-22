@@ -974,7 +974,8 @@ capture_fit_error <- function(fun) {
 #' element has failed when its fit raised an error (captured by
 #' \code{capture_fit_error()}), when a forked worker failed outside the
 #' fitting function (\code{parallel::mclapply()} returns a
-#' \code{"try-error"} object), or when a worker returned no result.
+#' \code{"try-error"} object), or when a worker returned no result. Each
+#' message is reported on one line.
 #'
 #' @param results List of results, one per element of \code{inputs}.
 #' @param inputs Character vector naming the elements.
@@ -993,11 +994,14 @@ stop_on_failed_fits <- function(results, inputs, what) {
         if (is.null(r)) {
             "the worker process returned no result"
         } else if (inherits(r, "try-error")) {
-            trimws(conditionMessage(attr(r, "condition")))
+            conditionMessage(attr(r, "condition"))
         } else {
             r$message
         }
     }, character(1))
+    ## Keep each failure on one line: some messages span several lines (e.g.,
+    ## the contrasts error of model.matrix() in R >= 4.7.0)
+    reasons <- trimws(gsub("\\s*\n\\s*", " ", reasons))
     stop(sprintf("Model fitting failed for %d of %d %ss:\n%s",
                  sum(failed), length(results), what,
                  paste0("  ", inputs[failed], ": ", reasons, collapse = "\n")),

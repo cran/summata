@@ -1,7 +1,7 @@
 Package: summata
 Type: Package
 Title: Publication-Ready Summary Tables and Forest Plots
-Version: 0.13.0
+Version: 0.13.1
 Authors@R: c(
     person(
         given = c("Paul", "Hsin-ti"), 
@@ -40,9 +40,9 @@ SystemRequirements: All optional. A 'LaTeX' distribution providing
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-10-19 00:24:17 UTC; paul
+Packaged: 2026-11-21 21:28:49 UTC; paul
 Author: Paul Hsin-ti McClelland [aut, cre, cph] (ORCID:
     <https://orcid.org/0000-0002-3119-6531>)
 Maintainer: Paul Hsin-ti McClelland <PaulHMcClelland@protonmail.com>
 Repository: CRAN
-Date/Publication: 2026-10-19 02:30:02 UTC
+Date/Publication: 2026-11-22 01:00:02 UTC

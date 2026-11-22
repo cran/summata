@@ -1,3 +1,7 @@
+# *summata* 0.13.1 (2026-11-21)
+
+* Report each failed fit of `uniscreen()` and `multifit()` on one line when its error message spans several lines, as the contrasts error of `model.matrix()` does in R-devel; update the test of that message for R-devel
+
 # *summata* 0.13.0 (2026-10-18)
 
 * Speed up `desctable()`, which now computes rank-test *p*-values from a single sort and derives the grouping structure once per table

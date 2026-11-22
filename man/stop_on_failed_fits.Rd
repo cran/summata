@@ -23,6 +23,7 @@ error that names every element whose fit failed, with its message. An
 element has failed when its fit raised an error (captured by
 \code{capture_fit_error()}), when a forked worker failed outside the
 fitting function (\code{parallel::mclapply()} returns a
-\code{"try-error"} object), or when a worker returned no result.
+\code{"try-error"} object), or when a worker returned no result. Each
+message is reported on one line.
 }
 \keyword{internal}

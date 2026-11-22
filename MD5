@@ -1,6 +1,6 @@
-305124f1d81dd7b67599de42f502f2d4 *DESCRIPTION
+5de1fbcdd01d4c928d771f9a1d6c6b8b *DESCRIPTION
 a081817a47b9c648551e8565eb181852 *NAMESPACE
-ecaa9cab9ef6c200b8f446b2daa17046 *NEWS.md
+d2272e2ad2ea527d335f1d26b8d366f7 *NEWS.md
 26c3469f1ced71b59f5769ca9159d130 *R/autoforest.R
 e41357f8c2f5dbef2c99d0ce73a35e10 *R/comp_utils.R
 ff974b4e09823ac3202ce6aacc18e6ed *R/compfit.R
@@ -9,7 +9,7 @@ cd3e5cd0d033cb5efd7222a1e726cdc2 *R/data.R
 b836c424da2122f29ac7aa0c09ca9353 *R/desc_utils.R
 92a638f519c6bef9cded5b53bc0bd80e *R/desctable.R
 be69dbf0578a54edc5ef2ddc97863c27 *R/fit.R
-1cff24aa365ead00c045ca95dc7b4df5 *R/fit_utils.R
+261dfcbbf039c5ae411d21cb8f3b95bb *R/fit_utils.R
 a939629e5bea18556c9e785e76089891 *R/forest_utils.R
 6b761d6148d7eba5e29252cdb2ce51db *R/forestsave.R
 4212160386a42d5e11762bb615b05282 *R/fullfit.R
@@ -35,7 +35,7 @@ ece998360cae8407c8c1dd612e7e4f74 *R/table2docx.R
 c00a49b18bb099bbc711481171d8407a *R/tablesave.R
 4ebc6a12041761bc9a602d41bca13e8f *R/uniforest.R
 133cefa2daee7174f4e0997f97a1a3ba *R/uniscreen.R
-d2f1f2de0fd6bff573c99bb26b50af5b *README.md
+cdfcc1796e63485903c1909f4bdef947 *README.md
 ff40c1266a516419eabf0ac59acb5636 *build/vignette.rds
 563833e65bcf53b26ad0aeed337f4279 *data/clintrial.rda
 a52793056cdf4457a4e27afbaf63eb4a *data/clintrial_labels.rda
@@ -43,10 +43,10 @@ a1d0fcf6673de400a4e1d1a0761af5eb *inst/CITATION
 6e0842547a6960979d29e6a46a903f34 *inst/WORDLIST
 cbf885dd62a912e51b2fd2a7652ea608 *inst/doc/advanced_workflows.R
 f23deef8658051d79f9ce94f763b873d *inst/doc/advanced_workflows.Rmd
-7afa1c166101f8c70eb3d51ffa3a008f *inst/doc/advanced_workflows.html
+75415ee25e5786b9c3342514e3a9c949 *inst/doc/advanced_workflows.html
 f2a242dbf491bbc0a609bab6fd93fb74 *inst/doc/descriptive_tables.R
 890b419dad6bbe1315ab1529136e704f *inst/doc/descriptive_tables.Rmd
-f8831c9857b9d5b9216b78b1a99ddb98 *inst/doc/descriptive_tables.html
+c813323c615b6fbb990ca7de396e4e8b *inst/doc/descriptive_tables.html
 adeecd3141f5b91fe6f560b37c7f5270 *inst/doc/forest_plots.R
 f87b13ce03b239be76261a40715ab34d *inst/doc/forest_plots.Rmd
 88fca4fa7bdaf46d71b56d9d42d15c69 *inst/doc/forest_plots.html
@@ -241,7 +241,7 @@ a3bb3d27b5375f5d3f0fe6e522e2f944 *man/sanitize_for_latex.Rd
 2b3763c8851edadde6292462b28e1847 *man/should_condense_binary.Rd
 49949a58f2f7e295fabb2f9a5cb9d8cb *man/split_interaction_term.Rd
 45f3474af3277b2e20cc13514792fcc4 *man/stop_if_no_estimates.Rd
-508cfbc8e6df794126c4ae4b87924465 *man/stop_on_failed_fits.Rd
+5207bf7119995764e42394bef41fdf3b *man/stop_on_failed_fits.Rd
 cff1a70ff4b12c6172e4e0265553c8b6 *man/summata-imports.Rd
 f90bb8228a7c32e89857fc45e792573a *man/surv_event_expression.Rd
 65b8b5875bca5e38edf4ea9071f73c46 *man/surv_event_indicator.Rd
@@ -316,7 +316,7 @@ ba15c48ce558a7c98c8b3055fde0c4f4 *tests/testthat/test-multivariate.R
 d10bc80a48084f12174d9c59f1ffe527 *tests/testthat/test-nonsyntactic-names.R
 a486d80ccc65ac5cfcee7b2bd166832f *tests/testthat/test-number-count.R
 634472125c5015d15407de7f1deb457f *tests/testthat/test-number-format.R
-b1db2d70ad450ae06cb1b8ea93f3bf7e *tests/testthat/test-parallel-fits.R
+3d139bd279fa3de54cc09b6612a7fed1 *tests/testthat/test-parallel-fits.R
 13f631fd4614db1c8b3bbca2d0078278 *tests/testthat/test-recdims.R
 3907f4f5ccfe3ae44c753d4ef1764e10 *tests/testthat/test-survtable-groups.R
 a1bd9076e07863ecf8c2102bc194b572 *tests/testthat/test-survtable-pdigits.R
